@@ -33,7 +33,7 @@ Sebucha Order Management System is a JavaFX-based desktop application designed t
 
 1. **Clone the Repository**
    ```bash
-   git clone https://github.com/danealmercolibao/Sebucha-Order-Management-System.git
+   git clone https://github.com/Danzskrtt/Sebucha-Order-Management-System.git
    ```
 
 2. **Open the Project**
