@@ -1,3 +1,5 @@
+Currently in Progress Project 
+
 # Sebucha Order Management System
 
 Sebucha Order Management System is a JavaFX-based desktop application designed to streamline the process of managing orders for small businesses. This project serves as a mini thesis and demonstrates the use of JavaFX and SceneBuilder for building modern, user-friendly GUIs.
