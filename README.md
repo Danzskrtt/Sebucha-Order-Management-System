@@ -91,7 +91,7 @@ This project is licensed under the MIT License.
 
 ## Authors
 
-- Dane Almer Colibao
+- Danzskrtt 
 
 ---
 
