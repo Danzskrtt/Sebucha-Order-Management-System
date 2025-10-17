@@ -4,9 +4,13 @@ module Sebucha {
 	requires javafx.fxml;
 	requires javafx.base;
 	requires javafx.graphics;
+	requires javafx.swing; // Add for better integration
 	
 	// SQLite database
 	requires java.sql;
+	
+	// Desktop integration for opening PDFs
+	requires java.desktop;
 	
 	// Ikonli for icons
 	requires org.kordamp.ikonli.core;
