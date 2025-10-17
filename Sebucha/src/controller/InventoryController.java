@@ -1,6 +1,7 @@
 package controller;
 
 import javafx.application.Platform;
+
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
@@ -11,20 +12,17 @@ import javafx.scene.Node;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
-import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.stage.FileChooser;
 import javafx.stage.Stage;
 import model.Product;
 import model.SqliteConnection;
-
 import java.io.File;
 import java.io.IOException;
 import java.net.URL;
 import java.sql.*;
 import java.text.DecimalFormat;
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Optional;
@@ -47,7 +45,6 @@ public class InventoryController implements Initializable {
     @FXML private TextField priceField;
     @FXML private TextField stockField;
     @FXML private ComboBox<String> statusComboBox;
-    @FXML private TextField imagePathField;
     
     // Action buttons
     @FXML private Button addButton;
@@ -73,8 +70,6 @@ public class InventoryController implements Initializable {
     
     // Database connection
     private Connection connection;
-    private PreparedStatement prepare;
-    private ResultSet result;
     
     // Data
     private ObservableList<Product> productsList = FXCollections.observableArrayList();
@@ -335,7 +330,6 @@ public class InventoryController implements Initializable {
         
         if (selectedFile != null) {
             selectedImagePath = selectedFile.getAbsolutePath();
-            imagePathField.setText(selectedImagePath);
             
             try {
                 Image image = new Image(selectedFile.toURI().toString());
@@ -349,7 +343,6 @@ public class InventoryController implements Initializable {
     @FXML
     private void handleRemoveImage(ActionEvent event) {
         selectedImagePath = "";
-        imagePathField.clear();
         productImageView.setImage(new Image(getClass().getResourceAsStream("/view/images/addimage.png")));
     }
     
@@ -519,7 +512,6 @@ public class InventoryController implements Initializable {
         
         if (product.getImagePath() != null && !product.getImagePath().isEmpty()) {
             selectedImagePath = product.getImagePath();
-            imagePathField.setText(selectedImagePath);
             
             try {
                 File imageFile = new File(selectedImagePath);
@@ -615,6 +607,7 @@ public class InventoryController implements Initializable {
         Parent root = FXMLLoader.load(getClass().getResource(fxmlPath));
         Stage stage = (Stage) ((Node) event.getSource()).getScene().getWindow();
         Scene scene = new Scene(root);
+        stage.setTitle("Sebucha Order Management System");
         stage.setScene(scene);
         stage.show();
     }
