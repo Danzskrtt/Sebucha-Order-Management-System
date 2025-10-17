@@ -31,6 +31,7 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.ResourceBundle;
 
 public class RecentOrderController implements Initializable {
@@ -51,10 +52,11 @@ public class RecentOrderController implements Initializable {
     @FXML private Button refreshButton;
     @FXML private Button clearFiltersButton;
     @FXML private Button exportButton;
+    @FXML private Button resetButton; // Add reset button to RecentOrderController
 
     // Orders table
     @FXML private TableView<Order> ordersTable;
-    @FXML private TableColumn<Order, Integer> orderIdColumn;
+    @FXML private TableColumn<Order, String> orderIdColumn; // Changed from Integer to String
     @FXML private TableColumn<Order, String> customerNameColumn;
     @FXML private TableColumn<Order, String> orderDateColumn;
     @FXML private TableColumn<Order, String> orderTypeColumn;
@@ -112,21 +114,36 @@ public class RecentOrderController implements Initializable {
             return new SimpleStringProperty(itemsSummary);
         });
         
-        // Actions column - simple string instead of buttons to avoid complexity
-        actionsColumn.setCellValueFactory(cellData -> {
-            return new SimpleStringProperty("View Details");
-        });
-        
-        // Handle row selection for viewing details
-        ordersTable.setRowFactory(tv -> {
-            TableRow<Order> row = new TableRow<>();
-            row.setOnMouseClicked(event -> {
-                if (event.getClickCount() == 2 && !row.isEmpty()) {
-                    Order selectedOrder = row.getItem();
-                    viewOrderDetails(selectedOrder);
+        // Actions column with styled button
+        actionsColumn.setCellFactory(col -> new TableCell<Order, String>() {
+            private final Button viewButton = new Button("View Details");
+            
+            {
+                viewButton.setStyle("-fx-background-color: linear-gradient(to bottom, #C4B5FD 0%, #8B5CF6 50%, #5B21B6 100%); " +
+                                 "-fx-background-radius: 12; " +
+                                 "-fx-text-fill: white; " +
+                                 "-fx-font-family: 'Calibri'; " +
+                                 "-fx-font-size: 13px; " +
+                                 "-fx-font-weight: bold; " +
+                                 "-fx-cursor: hand; " +
+                                 "-fx-padding: 5 15;");
+                
+                viewButton.setOnAction(event -> {
+                    if (getTableRow() != null && getTableRow().getItem() != null) {
+                        viewOrderDetails(getTableRow().getItem());
+                    }
+                });
+            }
+            
+            @Override
+            protected void updateItem(String item, boolean empty) {
+                super.updateItem(item, empty);
+                if (empty || getTableRow() == null || getTableRow().getItem() == null) {
+                    setGraphic(null);
+                } else {
+                    setGraphic(viewButton);
                 }
-            });
-            return row;
+            }
         });
         
         // Set table data
@@ -178,9 +195,9 @@ public class RecentOrderController implements Initializable {
                     String timePart = resultSet.getString("order_time");
                     LocalDateTime orderDate = parseOrderDateTime(datePart, timePart);
                     
-                    // Create order object using correct column names
+                    // Create order object using String ID to support generated order IDs
                     Order order = new Order(
-                        resultSet.getInt("id"),
+                        resultSet.getString("id"), // Changed from getInt to getString
                         resultSet.getString("customer_name"),
                         resultSet.getString("order_type"),
                         resultSet.getString("payment_method"),
@@ -313,7 +330,7 @@ public class RecentOrderController implements Initializable {
         alert.showAndWait();
     }
 
-    private String getDetailedOrderItems(int orderId) {
+    private String getDetailedOrderItems(String orderId) {
         Connection connection = null;
         StringBuilder items = new StringBuilder();
         
@@ -324,14 +341,18 @@ public class RecentOrderController implements Initializable {
                           "WHERE oi.order_id = ?";
             
             PreparedStatement statement = connection.prepareStatement(query);
-            statement.setInt(1, orderId);
+            statement.setString(1, orderId);
             ResultSet resultSet = statement.executeQuery();
             
             while (resultSet.next()) {
-                items.append("• ").append(resultSet.getInt("quantity"))
-                     .append("x ").append(resultSet.getString("name"))
-                     .append(" @ ₱").append(decimalFormat.format(resultSet.getDouble("unit_price")))
-                     .append(" = ₱").append(decimalFormat.format(resultSet.getDouble("total_price")))
+                items.append("• ")
+                     .append(resultSet.getInt("quantity"))
+                     .append("x ")
+                     .append(resultSet.getString("name"))
+                     .append(" @ ₱")
+                     .append(decimalFormat.format(resultSet.getDouble("unit_price")))
+                     .append(" = ₱")
+                     .append(decimalFormat.format(resultSet.getDouble("total_price")))
                      .append("\n");
             }
             
@@ -348,7 +369,7 @@ public class RecentOrderController implements Initializable {
         return items.toString();
     }
 
-    private String getOrderItemsSummary(int orderId) {
+    private String getOrderItemsSummary(String orderId) {
         Connection connection = null;
         try {
             connection = SqliteConnection.Connector();
@@ -356,7 +377,7 @@ public class RecentOrderController implements Initializable {
                            "FROM order_items oi LEFT JOIN products p ON oi.product_id = p.id " +
                            "WHERE oi.order_id = ?";
             PreparedStatement statement = connection.prepareStatement(query);
-            statement.setInt(1, orderId);
+            statement.setString(1, orderId);
             ResultSet rs = statement.executeQuery();
             java.util.List<String> items = new java.util.ArrayList<>();
             while (rs.next()) {
@@ -401,6 +422,7 @@ public class RecentOrderController implements Initializable {
         paymentFilterComboBox.setValue("All Payments");
         fromDatePicker.setValue(LocalDate.now().minusDays(30));
         toDatePicker.setValue(LocalDate.now());
+        applyFilters(); 
     }
 
     @FXML
@@ -418,6 +440,132 @@ public class RecentOrderController implements Initializable {
         
         if (file != null) {
             exportToCSV(file);
+        }
+    }
+
+    @FXML
+    private void handleResetButton() {
+        // First confirmation dialog - Step 1
+        Alert firstConfirmation = new Alert(Alert.AlertType.WARNING);
+        firstConfirmation.setTitle("Reset Confirmation - Step 1");
+        firstConfirmation.setHeaderText("Are you sure you want to reset ALL order history and dashboard data?");
+        firstConfirmation.setContentText("This action will permanently delete:\n" +
+                                        "• All order records from the database\n" +
+                                        "• All order items and transaction history\n" +
+                                        "• Dashboard revenue and statistics\n" +
+                                        "• Recent order history display\n\n" +
+                                        "Do you want to continue?");
+        
+        // Add custom buttons for first confirmation
+        ButtonType continueButton = new ButtonType("Continue");
+        ButtonType cancelButton = new ButtonType("Cancel", ButtonType.CANCEL.getButtonData());
+        firstConfirmation.getButtonTypes().setAll(continueButton, cancelButton);
+        
+        Optional<ButtonType> firstResult = firstConfirmation.showAndWait();
+        
+        if (firstResult.isPresent() && firstResult.get() == continueButton) {
+            // Second confirmation dialog - Step 2 (Final Warning)
+            Alert secondConfirmation = new Alert(Alert.AlertType.ERROR);
+            secondConfirmation.setTitle("Reset Confirmation - Step 2");
+            secondConfirmation.setHeaderText("FINAL WARNING: This will permanently delete ALL order data!");
+            secondConfirmation.setContentText("This action cannot be undone and will:\n\n" +
+                                            "🗑️ DELETE ALL ORDERS from database\n" +
+                                            "🗑️ DELETE ALL ORDER ITEMS\n" +
+                                            "📊 RESET Dashboard to ₱0.00\n" +
+                                            "📈 CLEAR All charts and statistics\n" +
+                                            "📋 EMPTY Recent orders table\n\n" +
+                                            "⚠️ THIS CANNOT BE REVERSED! ⚠️\n\n" +
+                                            "Are you absolutely sure you want to proceed?");
+            
+            // Add custom buttons for second confirmation
+            ButtonType resetButton = new ButtonType("Yes, Delete Everything");
+            ButtonType keepDataButton = new ButtonType("No, Keep Data", ButtonType.CANCEL.getButtonData());
+            secondConfirmation.getButtonTypes().setAll(resetButton, keepDataButton);
+            
+            Optional<ButtonType> secondResult = secondConfirmation.showAndWait();
+            
+            if (secondResult.isPresent() && secondResult.get() == resetButton) {
+                // Only proceed with reset if both confirmations are accepted
+                performCompleteReset();
+                showAlert("Reset Complete", 
+                         "All order history has been permanently deleted!\n" +
+                         "Dashboard and charts have been reset.\n" +
+                         "System is now ready for new orders.");
+            } else {
+                // User cancelled at second step
+                showAlert("Reset Cancelled", "All order data has been preserved.");
+            }
+        } else {
+            // User cancelled at first step
+            showAlert("Reset Cancelled", "No changes were made to order data.");
+        }
+    }
+    
+    /**
+     * Performs complete reset of all order data and dashboard statistics
+     * This method deletes all orders and order_items from the database
+     */
+    private void performCompleteReset() {
+        Connection connection = null;
+        
+        try {
+            connection = SqliteConnection.Connector();
+            connection.setAutoCommit(false); // Start transaction
+            
+            // Delete all order items first (due to foreign key constraints)
+            String deleteOrderItemsQuery = "DELETE FROM order_items";
+            PreparedStatement deleteItemsStatement = connection.prepareStatement(deleteOrderItemsQuery);
+            int itemsDeleted = deleteItemsStatement.executeUpdate();
+            
+            // Delete all orders
+            String deleteOrdersQuery = "DELETE FROM orders";
+            PreparedStatement deleteOrdersStatement = connection.prepareStatement(deleteOrdersQuery);
+            int ordersDeleted = deleteOrdersStatement.executeUpdate();
+            
+            // Reset auto-increment counters (if applicable)
+            try {
+                PreparedStatement resetSequence = connection.prepareStatement("DELETE FROM sqlite_sequence WHERE name IN ('orders', 'order_items')");
+                resetSequence.executeUpdate();
+                resetSequence.close();
+            } catch (SQLException e) {
+                // sqlite_sequence might not exist, this is okay
+                System.out.println("Note: sqlite_sequence table not found or reset not needed");
+            }
+            
+            connection.commit(); // Commit transaction
+            
+            // Clear local data collections
+            allOrders.clear();
+            filteredOrders.clear();
+            
+            // Update UI to reflect the reset
+            updateSummaryStatistics();
+            updateDateRangeLabel();
+            
+            // Log the reset operation
+            System.out.println("=== COMPLETE RESET PERFORMED ===");
+            System.out.println("Orders deleted: " + ordersDeleted);
+            System.out.println("Order items deleted: " + itemsDeleted);
+            System.out.println("Dashboard reset: Complete");
+            System.out.println("===============================");
+            
+        } catch (SQLException e) {
+            try {
+                if (connection != null) connection.rollback();
+            } catch (SQLException rollbackEx) {
+                rollbackEx.printStackTrace();
+            }
+            showAlert("Reset Failed", "Error during reset operation: " + e.getMessage());
+            e.printStackTrace();
+        } finally {
+            try {
+                if (connection != null) {
+                    connection.setAutoCommit(true);
+                    connection.close();
+                }
+            } catch (SQLException e) {
+                e.printStackTrace();
+            }
         }
     }
 
@@ -483,7 +631,7 @@ public class RecentOrderController implements Initializable {
             
             Stage stage = (Stage) dashboardbutton.getScene().getWindow();
             Scene scene = new Scene(root);
-            stage.setTitle(title + " - Sebucha Management System");
+            stage.setTitle("Sebucha Order Management System");
             stage.setScene(scene);
             stage.show();
             
@@ -501,5 +649,103 @@ public class RecentOrderController implements Initializable {
             alert.setContentText(message);
             alert.showAndWait();
         });
+    }
+
+    // Add methods for getting dashboard metrics from recent orders
+    
+    /**
+     * Get today's income within the last 24 hours
+     */
+    public double getTodaysIncome() {
+        Connection connection = null;
+        double todaysIncome = 0.0;
+        
+        try {
+            connection = SqliteConnection.Connector();
+            String query = "SELECT SUM(total_amount) as today_total FROM orders " +
+                          "WHERE datetime(order_date || ' ' || order_time) >= datetime('now', '-24 hours')";
+            
+            PreparedStatement statement = connection.prepareStatement(query);
+            ResultSet resultSet = statement.executeQuery();
+            
+            if (resultSet.next()) {
+                todaysIncome = resultSet.getDouble("today_total");
+            }
+            
+        } catch (SQLException e) {
+            System.err.println("Error getting today's income: " + e.getMessage());
+        } finally {
+            try {
+                if (connection != null) connection.close();
+            } catch (SQLException e) {
+                e.printStackTrace();
+            }
+        }
+        
+        return todaysIncome;
+    }
+    
+    /**
+     * Get products sold within the last 24 hours
+     */
+    public int getTodaysProductsSold() {
+        Connection connection = null;
+        int productsSold = 0;
+        
+        try {
+            connection = SqliteConnection.Connector();
+            String query = "SELECT SUM(oi.quantity) as total_sold FROM order_items oi " +
+                          "JOIN orders o ON oi.order_id = o.id " +
+                          "WHERE datetime(o.order_date || ' ' || o.order_time) >= datetime('now', '-24 hours')";
+            
+            PreparedStatement statement = connection.prepareStatement(query);
+            ResultSet resultSet = statement.executeQuery();
+            
+            if (resultSet.next()) {
+                productsSold = resultSet.getInt("total_sold");
+            }
+            
+        } catch (SQLException e) {
+            System.err.println("Error getting today's products sold: " + e.getMessage());
+        } finally {
+            try {
+                if (connection != null) connection.close();
+            } catch (SQLException e) {
+                e.printStackTrace();
+            }
+        }
+        
+        return productsSold;
+    }
+    
+    /**
+     * Get total revenue from all orders
+     */
+    public double getTotalRevenue() {
+        Connection connection = null;
+        double totalRevenue = 0.0;
+        
+        try {
+            connection = SqliteConnection.Connector();
+            String query = "SELECT SUM(total_amount) as total_revenue FROM orders";
+            
+            PreparedStatement statement = connection.prepareStatement(query);
+            ResultSet resultSet = statement.executeQuery();
+            
+            if (resultSet.next()) {
+                totalRevenue = resultSet.getDouble("total_revenue");
+            }
+            
+        } catch (SQLException e) {
+            System.err.println("Error getting total revenue: " + e.getMessage());
+        } finally {
+            try {
+                if (connection != null) connection.close();
+            } catch (SQLException e) {
+                e.printStackTrace();
+            }
+        }
+        
+        return totalRevenue;
     }
 }
