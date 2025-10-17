@@ -53,6 +53,7 @@ public class OrderController implements Initializable {
     @FXML private TextField orderTotalField;
     @FXML private Button placeOrderButton;
     @FXML private Button clearCartButton;
+    @FXML private Button receiptButton; // Add receipt button field
 
     // Product Cards Container
     @FXML private ScrollPane productScrollPane;
@@ -365,6 +366,49 @@ public class OrderController implements Initializable {
         }
     }
 
+    @FXML
+    private void handlePrintReceipt(ActionEvent event) {
+        // Check if there's a recent order to print receipt for
+        if (lastPlacedOrderId == null || lastPlacedOrderId.isEmpty()) {
+            showAlert(Alert.AlertType.WARNING, "No Recent Order", 
+                     "Please place an order first before printing a receipt.");
+            return;
+        }
+        
+        // Check if we have the last order data
+        if (lastOrderData == null || lastOrderData.isEmpty()) {
+            showAlert(Alert.AlertType.WARNING, "No Order Data", 
+                     "No order data available for receipt printing.");
+            return;
+        }
+        
+        // Get current stage for file chooser
+        Stage currentStage = (Stage) receiptButton.getScene().getWindow();
+        
+        // Generate receipt using the ReceiptGenerator
+        boolean success = ReceiptGenerator.generateReceipt(
+            currentStage,
+            lastPlacedOrderId,
+            lastCustomerName != null ? lastCustomerName : "Walk-in Customer",
+            lastOrderType != null ? lastOrderType : "Dine-in",
+            lastPaymentMethod != null ? lastPaymentMethod : "Cash",
+            lastTotalAmount,
+            lastOrderData
+        );
+        
+        if (success) {
+            System.out.println("Receipt generated successfully for order: " + lastPlacedOrderId);
+        }
+    }
+
+    // Add fields to store last order information for receipt generation
+    private String lastPlacedOrderId;
+    private String lastCustomerName;
+    private String lastOrderType;
+    private String lastPaymentMethod;
+    private double lastTotalAmount;
+    private List<OrderItem> lastOrderData;
+
     private boolean validateOrderForm() {
         if (customerNameField.getText().trim().isEmpty()) {
             showAlert(Alert.AlertType.WARNING, "Validation Error", "Please enter customer name.");
@@ -396,46 +440,37 @@ public class OrderController implements Initializable {
             connection = SqliteConnection.Connector();
             connection.setAutoCommit(false);
             
+            // Generate custom order ID using OrderIdGenerator
+            String customOrderId = OrderIdGenerator.generateOrderId();
+            
             // Prepare date and time as TEXT per DB schema
             LocalDateTime now = LocalDateTime.now();
             String orderDateStr = now.toLocalDate().toString(); // YYYY-MM-DD
             String orderTimeStr = now.toLocalTime().format(DateTimeFormatter.ofPattern("HH:mm:ss"));
             
-            String orderQuery = "INSERT INTO orders (customer_name, order_type, payment_method, total_amount, order_date, order_time, order_status) VALUES (?, ?, ?, ?, ?, ?, ?)";
-            // Avoid RETURN_GENERATED_KEYS (not implemented by SQLite driver)
+            // Modified query to include custom order_id
+            String orderQuery = "INSERT INTO orders (id, customer_name, order_type, payment_method, total_amount, order_date, order_time, order_status) VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
             PreparedStatement orderStatement = connection.prepareStatement(orderQuery);
             
             double totalAmount = shoppingCart.stream().mapToDouble(OrderItem::getTotalPrice).sum();
             
-            orderStatement.setString(1, customerNameField.getText().trim());
-            orderStatement.setString(2, orderTypeComboBox.getValue());
-            orderStatement.setString(3, paymentMethodComboBox.getValue());
-            orderStatement.setDouble(4, totalAmount);
-            orderStatement.setString(5, orderDateStr);
-            orderStatement.setString(6, orderTimeStr);
-            orderStatement.setString(7, "Completed");
+            orderStatement.setString(1, customOrderId); // Use custom generated ID
+            orderStatement.setString(2, customerNameField.getText().trim());
+            orderStatement.setString(3, orderTypeComboBox.getValue());
+            orderStatement.setString(4, paymentMethodComboBox.getValue());
+            orderStatement.setDouble(5, totalAmount);
+            orderStatement.setString(6, orderDateStr);
+            orderStatement.setString(7, orderTimeStr);
+            orderStatement.setString(8, "Completed");
             
             orderStatement.executeUpdate();
             
-            // Always fetch last inserted id from this connection
-            int orderId = 0;
-            try (PreparedStatement ps = connection.prepareStatement("SELECT last_insert_rowid()");
-                 ResultSet rs = ps.executeQuery()) {
-                if (rs.next()) {
-                    orderId = rs.getInt(1);
-                }
-            }
-            
-            if (orderId == 0) {
-                throw new SQLException("Failed to retrieve generated order ID.");
-            }
-            
-            // Insert order items
+            // Insert order items using the custom order ID
             String itemQuery = "INSERT INTO order_items (order_id, product_id, product_name, quantity, unit_price, total_price) VALUES (?, ?, ?, ?, ?, ?)";
             PreparedStatement itemStatement = connection.prepareStatement(itemQuery);
             
             for (OrderItem item : shoppingCart) {
-                itemStatement.setInt(1, orderId);
+                itemStatement.setString(1, customOrderId); // Use custom order ID
                 itemStatement.setInt(2, item.getProductId());
                 itemStatement.setString(3, item.getProductName());
                 itemStatement.setInt(4, item.getQuantity());
@@ -455,6 +490,18 @@ public class OrderController implements Initializable {
             itemStatement.close();
             orderStatement.close();
             connection.commit();
+            
+            // Show success message with the generated order ID
+            showAlert(Alert.AlertType.INFORMATION, "Success", 
+                     "Order placed successfully!\nOrder ID: " + customOrderId);
+            
+            // Save last order information for receipt generation
+            lastPlacedOrderId = customOrderId;
+            lastCustomerName = customerNameField.getText().trim();
+            lastOrderType = orderTypeComboBox.getValue();
+            lastPaymentMethod = paymentMethodComboBox.getValue();
+            lastTotalAmount = totalAmount;
+            lastOrderData = new ArrayList<>(shoppingCart);
             
             return true;
             
@@ -479,7 +526,7 @@ public class OrderController implements Initializable {
     }
 
     private void clearOrderForm() {
-        customerNameField.clear();
+        customerNameField.setText("None");
         orderTypeComboBox.setValue("Dine-in");
         paymentMethodComboBox.setValue("Cash");
         orderTotalField.setText("₱0.00");
@@ -525,6 +572,7 @@ public class OrderController implements Initializable {
             Parent root = FXMLLoader.load(getClass().getResource(fxmlPath));
             Stage stage = (Stage) ((Node) event.getSource()).getScene().getWindow();
             Scene scene = new Scene(root);
+            stage.setTitle("Sebucha Order Management System");
             stage.setScene(scene);
             stage.show();
         } catch (IOException e) {
