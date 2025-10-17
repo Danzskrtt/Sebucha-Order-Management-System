@@ -1,6 +1,8 @@
 package controller;
 
 import javafx.application.Platform;
+
+
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
@@ -38,7 +40,7 @@ public class DashboardController implements Initializable {
     @FXML private Button orderbutton;
     @FXML private Button recentorderbutton;
     @FXML private Button logoutbutton;
-    @FXML private Button resetbutton;
+    @FXML private Button ResetButton;
     
     // Data display labels
     @FXML private Label today_income;
@@ -133,13 +135,18 @@ public class DashboardController implements Initializable {
     
     @FXML
     private void handleResetButton(ActionEvent event) {
-        // First confirmation dialog
+        // First confirmation dialog - Step 1
         Alert firstConfirmation = new Alert(AlertType.WARNING);
         firstConfirmation.setTitle("Reset Confirmation - Step 1");
-        firstConfirmation.setHeaderText("Are you sure you want to reset all dashboard data?");
-        firstConfirmation.setContentText("This action will clear all displayed income data, product sales, and charts.\n\nDo you want to continue?");
+        firstConfirmation.setHeaderText("Are you sure you want to reset ALL order history and dashboard data?");
+        firstConfirmation.setContentText("This action will permanently delete:\n" +
+                                      "• All order records from the database\n" +
+                                      "• All order items and transaction history\n" +
+                                      "• Dashboard revenue and statistics\n" +
+                                      "• Recent order history display\n\n" +
+                                      "Do you want to continue?");
         
-        // Add custom buttons for first confirmation
+        
         ButtonType continueButton = new ButtonType("Continue");
         ButtonType cancelButton = new ButtonType("Cancel", ButtonType.CANCEL.getButtonData());
         firstConfirmation.getButtonTypes().setAll(continueButton, cancelButton);
@@ -147,73 +154,202 @@ public class DashboardController implements Initializable {
         Optional<ButtonType> firstResult = firstConfirmation.showAndWait();
         
         if (firstResult.isPresent() && firstResult.get() == continueButton) {
-            // Second confirmation dialog - more specific warning
+            // Second confirmation dialog - Step 2 (Final Warning)
             Alert secondConfirmation = new Alert(AlertType.ERROR);
             secondConfirmation.setTitle("Reset Confirmation - Step 2");
-            secondConfirmation.setHeaderText("FINAL WARNING: This will permanently clear all dashboard data!");
-            secondConfirmation.setContentText("• Today's Income: ₱ 0.00\n" +
-                                            "• Products Sold: 0\n" +
-                                            "• Total Income: ₱ 0.00\n" +
-                                            "• All Charts: Cleared\n\n" +
-                                            "Are you absolutely sure you want to proceed?");
+            secondConfirmation.setHeaderText("FINAL WARNING: This will permanently delete ALL order data!");
+            secondConfirmation.setContentText("This action cannot be undone and will:\n\n" +
+                                          "🗑️ DELETE ALL ORDERS from database\n" +
+                                          "🗑️ DELETE ALL ORDER ITEMS\n" +
+                                          "📊 RESET Dashboard to ₱0.00\n" +
+                                          "📈 CLEAR All charts and statistics\n" +
+                                          "📋 EMPTY Recent orders table\n\n" +
+                                          "⚠️ THIS CANNOT BE REVERSED! ⚠️\n\n" +
+                                          "Are you absolutely sure you want to proceed?");
             
-            // Add custom buttons for second confirmation
-            ButtonType resetButton = new ButtonType("Yes, Reset Data");
+           
+            ButtonType resetButton = new ButtonType("Yes, Delete Everything");
             ButtonType keepDataButton = new ButtonType("No, Keep Data", ButtonType.CANCEL.getButtonData());
             secondConfirmation.getButtonTypes().setAll(resetButton, keepDataButton);
             
             Optional<ButtonType> secondResult = secondConfirmation.showAndWait();
             
             if (secondResult.isPresent() && secondResult.get() == resetButton) {
-                // Only reset if both confirmations are accepted
-                resetDashboard();
-                showAlert("Reset Complete", "Dashboard data has been reset successfully!", AlertType.INFORMATION);
+                performCompleteReset();
+                showAlert("Reset Complete", 
+                         "All order history has been permanently deleted!\n" +
+                         "Dashboard and charts have been reset.\n" +
+                         "System is now ready for new orders.", AlertType.INFORMATION);
+                
+                // Refresh the dashboard after reset
+                refreshDashboard();
             } else {
-                // User cancelled at second step
-                showAlert("Reset Cancelled", "Dashboard data has been preserved.", AlertType.INFORMATION);
+                showAlert("Reset Cancelled", "All order data has been preserved.", AlertType.INFORMATION);
             }
         } else {
-            // User cancelled at first step
-            showAlert("Reset Cancelled", "Dashboard data remains unchanged.", AlertType.INFORMATION);
+            showAlert("Reset Cancelled", "No changes were made to order data.", AlertType.INFORMATION);
+        }
+    }
+    
+    private void performCompleteReset() {
+        Connection connection = null;
+        
+        try {
+            connection = SqliteConnection.Connector();
+            connection.setAutoCommit(false); // Start transaction
+            
+            // Delete all order items first (due to foreign key constraints)
+            String deleteOrderItemsQuery = "DELETE FROM order_items";
+            PreparedStatement deleteItemsStatement = connection.prepareStatement(deleteOrderItemsQuery);
+            int itemsDeleted = deleteItemsStatement.executeUpdate();
+            
+            // Delete all orders
+            String deleteOrdersQuery = "DELETE FROM orders";
+            PreparedStatement deleteOrdersStatement = connection.prepareStatement(deleteOrdersQuery);
+            int ordersDeleted = deleteOrdersStatement.executeUpdate();
+            
+            // Reset auto-increment counters (if applicable)
+            try {
+                PreparedStatement resetSequence = connection.prepareStatement("DELETE FROM sqlite_sequence WHERE name IN ('orders', 'order_items')");
+                resetSequence.executeUpdate();
+                resetSequence.close();
+            } catch (SQLException e) {
+                // sqlite_sequence might not exist, this is okay
+                System.out.println("Note: sqlite_sequence table not found or reset not needed");
+            }
+            
+            connection.commit(); // Commit transaction
+            
+            // Log the reset operation
+            System.out.println("=== COMPLETE RESET PERFORMED ===");
+            System.out.println("Orders deleted: " + ordersDeleted);
+            System.out.println("Order items deleted: " + itemsDeleted);
+            System.out.println("Dashboard reset: Complete");
+            System.out.println("===============================");
+            
+        } catch (SQLException e) {
+            try {
+                if (connection != null) connection.rollback();
+            } catch (SQLException rollbackEx) {
+                rollbackEx.printStackTrace();
+            }
+            showAlert("Reset Failed", "Error during reset operation: " + e.getMessage(), AlertType.ERROR);
+            e.printStackTrace();
+        } finally {
+            try {
+                if (connection != null) {
+                    connection.setAutoCommit(true);
+                    connection.close();
+                }
+            } catch (SQLException e) {
+                e.printStackTrace();
+            }
         }
     }
     
     // Data loading methods
     private void loadDashboardData() {
-        loadTodayIncome();
-        loadProductsSold();
-        loadTotalIncome();
+        loadTodayIncomeFromRecentOrders();
+        loadProductsSoldFromRecentOrders();
+        loadTotalIncomeFromRecentOrders();
         loadBestSellersChart();
         loadIncomeChart();
     }
     
-    // Reset all dashboard data to initial/empty state
-    private void resetDashboard() {
-        // Reset data labels to default values
-        today_income.setText("₱ 0.00");
-        products_sold.setText("0");
-        total_income.setText("₱ 0.00");
-        
-        // Clear all chart data
-        bestsellers.getData().clear();
-        incomechart.getData().clear();
-        
-        // Optionally add empty series to maintain chart structure
-        XYChart.Series<String, Number> emptyBarSeries = new XYChart.Series<>();
-        emptyBarSeries.setName("Best Sellers");
-        bestsellers.getData().add(emptyBarSeries);
-        
-        XYChart.Series<String, Number> emptyLineSeries = new XYChart.Series<>();
-        emptyLineSeries.setName("Daily Income");
-        incomechart.getData().add(emptyLineSeries);
+    // Updated methods to use direct database queries instead of RecentOrderController instances
+    private void loadTodayIncomeFromRecentOrders() {
+        Connection connection = null;
+        try {
+            connection = SqliteConnection.Connector();
+            String query = "SELECT SUM(total_amount) as today_total FROM orders " +
+                          "WHERE datetime(order_date || ' ' || order_time) >= datetime('now', '-24 hours')";
+            
+            PreparedStatement statement = connection.prepareStatement(query);
+            ResultSet resultSet = statement.executeQuery();
+            
+            double todayTotal = 0.0;
+            if (resultSet.next()) {
+                todayTotal = resultSet.getDouble("today_total");
+            }
+            
+            today_income.setText("₱ " + decimalFormat.format(todayTotal));
+            
+        } catch (SQLException e) {
+            System.err.println("Error loading today's income: " + e.getMessage());
+            today_income.setText("₱ 0.00");
+        } finally {
+            try {
+                if (connection != null) connection.close();
+            } catch (SQLException e) {
+                e.printStackTrace();
+            }
+        }
     }
     
+    private void loadProductsSoldFromRecentOrders() {
+        Connection connection = null;
+        try {
+            connection = SqliteConnection.Connector();
+            String query = "SELECT SUM(oi.quantity) as total_sold FROM order_items oi " +
+                          "JOIN orders o ON oi.order_id = o.id " +
+                          "WHERE datetime(o.order_date || ' ' || o.order_time) >= datetime('now', '-24 hours')";
+            
+            PreparedStatement statement = connection.prepareStatement(query);
+            ResultSet resultSet = statement.executeQuery();
+            
+            int totalSold = 0;
+            if (resultSet.next()) {
+                totalSold = resultSet.getInt("total_sold");
+            }
+            
+            products_sold.setText(String.valueOf(totalSold));
+            
+        } catch (SQLException e) {
+            System.err.println("Error loading products sold: " + e.getMessage());
+            products_sold.setText("0");
+        } finally {
+            try {
+                if (connection != null) connection.close();
+            } catch (SQLException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+    
+    private void loadTotalIncomeFromRecentOrders() {
+        Connection connection = null;
+        try {
+            connection = SqliteConnection.Connector();
+            String query = "SELECT SUM(total_amount) as total_revenue FROM orders";
+            
+            PreparedStatement statement = connection.prepareStatement(query);
+            ResultSet resultSet = statement.executeQuery();
+            
+            double totalIncome = 0.0;
+            if (resultSet.next()) {
+                totalIncome = resultSet.getDouble("total_revenue");
+            }
+            
+            total_income.setText("₱ " + decimalFormat.format(totalIncome));
+            
+        } catch (SQLException e) {
+            System.err.println("Error loading total income: " + e.getMessage());
+            total_income.setText("₱ 0.00");
+        } finally {
+            try {
+                if (connection != null) connection.close();
+            } catch (SQLException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
+    // Keep original methods as fallback
     private void loadTodayIncome() {
-        String sql = "SELECT SUM(total_amount) as today_total FROM orders WHERE DATE(order_date) = ?";
+        String sql = "SELECT SUM(total_amount) as today_total FROM orders WHERE datetime(order_date || ' ' || order_time) >= datetime('now', '-24 hours')";
         
         try {
             prepare = connection.prepareStatement(sql);
-            prepare.setString(1, LocalDate.now().toString());
             result = prepare.executeQuery();
             
             double todayTotal = 0.0;
@@ -230,12 +366,11 @@ public class DashboardController implements Initializable {
     }
     
     private void loadProductsSold() {
-        String sql = "SELECT SUM(quantity) as total_sold FROM order_items oi " +
-                    "JOIN orders o ON oi.order_id = o.id WHERE DATE(o.order_date) = ?";
+        String sql = "SELECT SUM(oi.quantity) as total_sold FROM order_items oi " +
+                    "JOIN orders o ON oi.order_id = o.id WHERE datetime(o.order_date || ' ' || o.order_time) >= datetime('now', '-24 hours')";
         
         try {
             prepare = connection.prepareStatement(sql);
-            prepare.setString(1, LocalDate.now().toString());
             result = prepare.executeQuery();
             
             int totalSold = 0;
@@ -277,7 +412,7 @@ public class DashboardController implements Initializable {
                     "JOIN products p ON oi.product_id = p.id " +
                     "GROUP BY p.id, p.name " +
                     "ORDER BY total_quantity DESC " +
-                    "LIMIT 5"; // Limited to 5 bars maximum
+                    "LIMIT 5";
         
         try {
             prepare = connection.prepareStatement(sql);
@@ -286,7 +421,7 @@ public class DashboardController implements Initializable {
             // Clear existing data
             bestsellers.getData().clear();
             
-            // Create a single series for all products (no individual styling)
+            // Create a single series for all products
             XYChart.Series<String, Number> series = new XYChart.Series<>();
             series.setName("Best Sellers");
             
@@ -300,26 +435,13 @@ public class DashboardController implements Initializable {
             
         } catch (SQLException e) {
             System.err.println("Error loading best sellers chart: " + e.getMessage());
-            // Add fallback sample data without styling
-            addSampleBestSellersData();
+            // Just clear the chart if there's an error
+            clearBestSellersChart();
         }
     }
     
-    private void addSampleBestSellersData() {
-        // Sample data without colors or styling
-        String[] sampleProducts = {"Iced Tea", "Coffee Latte", "Bubble Tea", "Green Smoothie", "Chocolate Cake"};
-        int[] sampleQuantities = {45, 38, 32, 28, 22};
-        
+    private void clearBestSellersChart() {
         bestsellers.getData().clear();
-        
-        XYChart.Series<String, Number> series = new XYChart.Series<>();
-        series.setName("Best Sellers");
-        
-        for (int i = 0; i < sampleProducts.length; i++) {
-            series.getData().add(new XYChart.Data<>(sampleProducts[i], sampleQuantities[i]));
-        }
-        
-        bestsellers.getData().add(series);
     }
     
     private void loadIncomeChart() {
@@ -376,6 +498,7 @@ public class DashboardController implements Initializable {
         Parent root = FXMLLoader.load(getClass().getResource(fxmlPath));
         Stage stage = (Stage) ((Node) event.getSource()).getScene().getWindow();
         Scene scene = new Scene(root);
+        stage.setTitle("Sebucha Order Management System");
         stage.setScene(scene);
         stage.show();
     }
@@ -402,4 +525,33 @@ public class DashboardController implements Initializable {
         alert.setContentText(message);
         alert.showAndWait();
     }
+    
+    /**
+     * Test method to demonstrate dashboard metrics retrieval
+     * This method shows how to get reference data from RecentOrderController
+     */
+    public void demonstrateDashboardMetrics() {
+        try {
+            RecentOrderController recentOrderController = new RecentOrderController();
+            
+            // Get the three key metrics
+            double todaysIncome24hrs = recentOrderController.getTodaysIncome();
+            int productsSoldToday = recentOrderController.getTodaysProductsSold();
+            double totalRevenue = recentOrderController.getTotalRevenue();
+            
+            // Display metrics in console for reference
+            System.out.println("=== DASHBOARD METRICS REFERENCE ===");
+            System.out.println("Today's Income (24 hours): ₱" + decimalFormat.format(todaysIncome24hrs));
+            System.out.println("Products Sold Today: " + productsSoldToday + " units");
+            System.out.println("Total Revenue (All Time): ₱" + decimalFormat.format(totalRevenue));
+            System.out.println("==================================");
+            
+            // You can also use these values for any other purpose
+            return;
+            
+        } catch (Exception e) {
+            System.err.println("Error getting dashboard metrics: " + e.getMessage());
+        }
+    }
 }
+
