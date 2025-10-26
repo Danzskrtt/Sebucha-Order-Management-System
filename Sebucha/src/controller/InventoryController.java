@@ -91,9 +91,6 @@ public class InventoryController implements Initializable {
         // Load products
         loadProducts();
         
-        // Set active button
-        setActiveButton(inventorybutton);
-        
         // Setup window
         Platform.runLater(() -> {
             Stage stage = (Stage) inventorybutton.getScene().getWindow();
@@ -121,7 +118,6 @@ public class InventoryController implements Initializable {
     private void handleInventoryButton(ActionEvent event) {
         // Already on inventory page
         refreshProducts();
-        setActiveButton(inventorybutton);
     }
     
     @FXML
@@ -181,7 +177,6 @@ public class InventoryController implements Initializable {
                 prepare.setString(5, statusComboBox.getValue());
                 prepare.setString(6, selectedImagePath != null ? selectedImagePath : "");
                 
-                // Store as current timestamp in seconds (Unix timestamp)
                 long currentTimestamp = System.currentTimeMillis() / 1000;
                 prepare.setLong(7, currentTimestamp);
                 
@@ -350,12 +345,13 @@ public class InventoryController implements Initializable {
     private void setupComboBoxes() {
         // Category options
         categoryComboBox.getItems().addAll(
-            "Tea", "Coffee", "Smoothie", "Pastry", "Snack", "Other"
+            "Premium Series", "Classic Series", "Latte Series", "Frappe Series", "Healthy Fruit Tea", "Hot Drinks", "Food Pair"
+            ,"Add-ons"
         );
         
         // Status options
         statusComboBox.getItems().addAll(
-            "Available", "Out of Stock", "Discontinued"
+            "Available", "Out of Stock", "Discontinued", "Low Stock"
         );
     }
     
@@ -384,6 +380,41 @@ public class InventoryController implements Initializable {
                     setText(null);
                 } else {
                     setText("₱ " + decimalFormat.format(price));
+                }
+            }
+        });
+        
+        // Format status column with color coding
+        statusColumn.setCellFactory(column -> new TableCell<Product, String>() {
+            @Override
+            protected void updateItem(String status, boolean empty) {
+                super.updateItem(status, empty);
+                if (empty || status == null) {
+                    setText(null);
+                    setStyle("");
+                } else {
+                    setText(status);
+                    
+                    // Apply color coding based on status
+                    String style = "-fx-text-fill: white; -fx-font-weight: bold; -fx-padding: 5; -fx-border-radius: 5; -fx-background-radius: 5; ";
+                    
+                    switch (status.toLowerCase()) {
+                        case "available":
+                            style += "-fx-background-color: #22C55E;"; // Green 
+                            break;
+                        case "out of stock":
+                            style += "-fx-background-color: #F97316;"; // Orange 
+                            break;
+                        case "discontinued":
+                            style += "-fx-background-color: #EF4444;"; // Red 
+                            break;
+                        case "low stock":
+                            style += "-fx-background-color: #FFC107;"; //Amber
+                            break;
+                    }
+                    
+                    setStyle(style);
+                    setAlignment(javafx.geometry.Pos.CENTER);
                 }
             }
         });
@@ -465,15 +496,15 @@ public class InventoryController implements Initializable {
                     result.getInt("stock"),
                     result.getString("status"),
                     result.getString("image_path"),
-                    result.getLong("date_added") // Read as Unix timestamp (long)
+                    result.getLong("date_added") 
                 );
                 productsList.add(product);
                 count++;
-                System.out.println("Loaded product: " + product.getName()); // Debug output
+                System.out.println("Loaded product: " + product.getName()); 
             }
             
-            System.out.println("Total products loaded: " + count); // Debug output
-            System.out.println("ProductsList size: " + productsList.size()); // Debug output
+            System.out.println("Total products loaded: " + count); 
+            System.out.println("ProductsList size: " + productsList.size()); 
             
             // Refresh the table view
             productsTable.refresh();
@@ -483,7 +514,7 @@ public class InventoryController implements Initializable {
             e.printStackTrace();
             showAlert("Database Error", "Error loading products: " + e.getMessage(), Alert.AlertType.ERROR);
         } finally {
-            // Always close ResultSet and PreparedStatement
+          
             if (result != null) {
                 try {
                     result.close();
@@ -610,21 +641,6 @@ public class InventoryController implements Initializable {
         stage.setTitle("Sebucha Order Management System");
         stage.setScene(scene);
         stage.show();
-    }
-    
-    private void setActiveButton(Button activeButton) {
-        // Define base styles for navigation buttons - all buttons maintain bold font weight
-        String baseStyle = "-fx-background-color: linear-gradient(to bottom, #EEEEEE, #E0E0E0); -fx-background-radius: 15; -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.15), 8, 0, 0, 2); -fx-cursor: hand; -fx-font-weight: bold;";
-        String activeStyle = "-fx-background-color: linear-gradient(to bottom, #EEEEEE, #E0E0E0); -fx-background-radius: 15; -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.2), 10, 0, 0, 3); -fx-cursor: hand; -fx-font-weight: bold; -fx-border-color: rgba(255,255,255,0.5); -fx-border-width: 1; -fx-border-radius: 15;";
-        
-        // Reset all buttons to base style
-        dashboardbutton.setStyle(baseStyle);
-        inventorybutton.setStyle(baseStyle);
-        orderbutton.setStyle(baseStyle);
-        recentorderbutton.setStyle(baseStyle);
-        
-        // Set active button style
-        activeButton.setStyle(activeStyle);
     }
     
     private void showAlert(String title, String message, Alert.AlertType type) {
