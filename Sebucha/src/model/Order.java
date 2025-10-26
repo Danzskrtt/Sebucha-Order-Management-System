@@ -4,7 +4,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 public class Order {
-    private int id;
+    private String id; // Generates IDs like "ORD-000123"
     private String customerName;
     private String orderType; // Dine-in, Takeout, Delivery
     private String paymentMethod; // Cash, Card, GCash
@@ -17,8 +17,8 @@ public class Order {
     // Default constructor
     public Order() {}
 
-    // Constructor for database operations (matches controller expectations)
-    public Order(int id, String customerName, String orderType, String paymentMethod, 
+    // Constructor for database operations 
+    public Order(String id, String customerName, String orderType, String paymentMethod, 
                  double totalAmount, LocalDateTime orderDate, String status) {
         this.id = id;
         this.customerName = customerName;
@@ -30,7 +30,7 @@ public class Order {
     }
 
     // Full constructor with all parameters
-    public Order(int id, String customerName, String orderType, String paymentMethod, 
+    public Order(String id, String customerName, String orderType, String paymentMethod, 
                  String status, double totalAmount, LocalDateTime orderDate, 
                  List<OrderItem> orderItems, String notes) {
         this.id = id;
@@ -45,7 +45,7 @@ public class Order {
     }
 
     // Getters
-    public int getId() {
+    public String getId() { 
         return id;
     }
 
@@ -82,7 +82,7 @@ public class Order {
     }
 
     // Setters
-    public void setId(int id) {
+    public void setId(String id) { 
         this.id = id;
     }
 
@@ -121,7 +121,7 @@ public class Order {
     @Override
     public String toString() {
         return "Order{" +
-                "id=" + id +
+                "id='" + id + '\'' + 
                 ", customerName='" + customerName + '\'' +
                 ", orderType='" + orderType + '\'' +
                 ", paymentMethod='" + paymentMethod + '\'' +
