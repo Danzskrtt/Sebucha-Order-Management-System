@@ -53,7 +53,7 @@ public class OrderController implements Initializable {
     @FXML private TextField orderTotalField;
     @FXML private Button placeOrderButton;
     @FXML private Button clearCartButton;
-    @FXML private Button receiptButton; // Add receipt button field
+    @FXML private Button receiptButton;
 
     // Product Cards Container
     @FXML private ScrollPane productScrollPane;
@@ -74,16 +74,113 @@ public class OrderController implements Initializable {
 
     @Override
     public void initialize(URL location, ResourceBundle resources) {
+        // Set default customer name
+        customerNameField.setText("None");
+        
         initializeComboBoxes();
         initializeShoppingCartTable();
         loadAvailableProducts();
         setupEventHandlers();
         clearOrderForm();
     }
+    
+    private boolean placeOrder() {
+        Connection connection = null;
+        PreparedStatement orderStmt = null;
+        PreparedStatement orderItemsStmt = null;
+        
+        try {
+            connection = SqliteConnection.Connector();
+            connection.setAutoCommit(false);
+            
+            // Get current timestamp for order date and time
+            LocalDateTime now = LocalDateTime.now();
+            String orderDate = now.toLocalDate().toString();
+            String orderTime = now.toLocalTime().toString();
+            
+            // Generate order ID using OrderIdGenerator
+            String orderId = OrderIdGenerator.generateOrderId();
+            
+            // Insert order into orders table
+            String orderSql = "INSERT INTO orders (id, customer_name, order_type, payment_method, order_status, total_amount, order_date, order_time) VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
+            orderStmt = connection.prepareStatement(orderSql);
+            
+            orderStmt.setString(1, orderId);
+            orderStmt.setString(2, customerNameField.getText().trim());
+            orderStmt.setString(3, orderTypeComboBox.getValue());
+            orderStmt.setString(4, paymentMethodComboBox.getValue());
+            orderStmt.setString(5, "Completed"); // Default status
+            orderStmt.setDouble(6, shoppingCart.stream().mapToDouble(OrderItem::getTotalPrice).sum());
+            orderStmt.setString(7, orderDate);
+            orderStmt.setString(8, orderTime);
+            
+            orderStmt.executeUpdate();
+            
+            // Insert order items
+            String orderItemsSql = "INSERT INTO order_items (order_id, product_id, product_name, quantity, unit_price, total_price, customization_details) VALUES (?, ?, ?, ?, ?, ?, ?)";
+            orderItemsStmt = connection.prepareStatement(orderItemsSql);
+            
+            // Update product stock
+            String updateStockSql = "UPDATE products SET stock = stock - ? WHERE id = ?";
+            try (PreparedStatement updateStockStmt = connection.prepareStatement(updateStockSql)) {
+                for (OrderItem item : shoppingCart) {
+                    // Insert order item
+                    orderItemsStmt.setString(1, orderId);
+                    orderItemsStmt.setInt(2, item.getProductId());
+                    orderItemsStmt.setString(3, item.getProductName());
+                    orderItemsStmt.setInt(4, item.getQuantity());
+                    orderItemsStmt.setDouble(5, item.getUnitPrice());
+                    orderItemsStmt.setDouble(6, item.getTotalPrice());
+                    orderItemsStmt.setString(7, item.getCustomizationDetails());
+                    orderItemsStmt.executeUpdate();
+                    
+                    // Update stock
+                    updateStockStmt.setInt(1, item.getQuantity());
+                    updateStockStmt.setInt(2, item.getProductId());
+                    updateStockStmt.executeUpdate();
+                }
+            }
+            
+            connection.commit();
+            return true;
+            
+        } catch (SQLException e) {
+            if (connection != null) {
+                try {
+                    connection.rollback();
+                } catch (SQLException ex) {
+                    ex.printStackTrace();
+                }
+            }
+            showAlert(Alert.AlertType.ERROR, "Database Error", "Failed to save order: " + e.getMessage());
+            e.printStackTrace();
+            return false;
+        } finally {
+            try {
+                if (orderStmt != null) orderStmt.close();
+                if (orderItemsStmt != null) orderItemsStmt.close();
+                if (connection != null) {
+                    connection.setAutoCommit(true);
+                    connection.close();
+                }
+            } catch (SQLException e) {
+                e.printStackTrace();
+            }
+        }
+    }
 
     private void initializeComboBoxes() {
-        // Initialize product category filter
-        productCategoryFilter.getItems().addAll("All Categories", "Coffee", "Tea", "Pastries", "Sandwiches", "Beverages");
+    	// Initialize product category filter
+        productCategoryFilter.getItems().addAll(
+            "All Categories", 
+            "Premium Series",
+            "Classic Series",
+            "Latte Series",
+            "Frappe Series", 
+            "Healthy Fruit Tea", 
+            "Hot Drinks", 
+            "Food Pair"
+        );
         productCategoryFilter.setValue("All Categories");
 
         // Initialize order type
@@ -246,20 +343,30 @@ public class OrderController implements Initializable {
         productCardsContainer.getChildren().clear();
         
         for (Product product : availableProducts) {
-            try {
-                FXMLLoader loader = new FXMLLoader(getClass().getResource("/view/fxml/ProductCard.fxml"));
-                Node productCard = loader.load();
-                
-                ProductCardController cardController = loader.getController();
-                cardController.setProduct(product);
-                cardController.setOrderController(this);
-                
-                productCardsContainer.getChildren().add(productCard);
-                
-            } catch (IOException e) {
-                System.err.println("Error loading product card: " + e.getMessage());
+            // Only show series and food pair categories, exclude Add-ons
+            if (shouldDisplayProduct(product)) {
+                try {
+                    FXMLLoader loader = new FXMLLoader(getClass().getResource("/view/fxml/ProductCard.fxml"));
+                    Node productCard = loader.load();
+                    
+                    ProductCardController cardController = loader.getController();
+                    cardController.setProduct(product);
+                    cardController.setOrderController(this);
+                    
+                    productCardsContainer.getChildren().add(productCard);
+                    
+                } catch (IOException e) {
+                    System.err.println("Error loading product card: " + e.getMessage());
+                    e.printStackTrace();
+                }
             }
         }
+    }
+    
+    private boolean shouldDisplayProduct(Product product) {
+        String category = product.getCategory();
+        // Only display series and food pair categories, excluding Add-ons
+        return category.contains("Series") || category.equals("Food Pair") || category.equals("Hot Drinks");
     }
 
     private void filterProducts() {
@@ -269,6 +376,11 @@ public class OrderController implements Initializable {
         productCardsContainer.getChildren().clear();
         
         for (Product product : availableProducts) {
+            // Only show series and food pair categories, exclude Add-ons
+            if (!shouldDisplayProduct(product)) {
+                continue;
+            }
+            
             boolean matchesSearch = searchText.isEmpty() || 
                                   product.getName().toLowerCase().contains(searchText) ||
                                   product.getCategory().toLowerCase().contains(searchText);
@@ -319,6 +431,104 @@ public class OrderController implements Initializable {
         shoppingCart.add(newItem);
     }
 
+    // Enhanced method to handle Add-ons and Cups combination logic
+    public void addEnhancedProductToCart(Product product, int quantity, String selectedSize, 
+                                       String selectedAddOn, String customProductName, double totalPrice) {
+        
+        // Special handling for Add-ons and Cups - they can be combined with other products
+        if (product.getCategory().equals("Add-ons") || product.getCategory().equals("Cups")) {
+            
+            // Look for existing compatible items in cart that can be combined with this add-on/cup
+            OrderItem compatibleItem = null;
+            for (OrderItem item : shoppingCart) {
+                // Find items from other categories that can be combined
+                if (item.canCombineWithAddOns() && item.getQuantity() == quantity) {
+                    compatibleItem = item;
+                    break;
+                }
+            }
+            
+            if (compatibleItem != null) {
+                // Combine with existing compatible item
+                String combinedName = compatibleItem.getProductName();
+                
+                if (product.getCategory().equals("Add-ons")) {
+                    combinedName += " + " + product.getName();
+                } else if (product.getCategory().equals("Cups")) {
+                    combinedName = product.getName() + " with " + compatibleItem.getProductName();
+                }
+                
+                // Update the compatible item
+                compatibleItem.setProductName(combinedName);
+                compatibleItem.setUnitPrice(compatibleItem.getUnitPrice() + product.getPrice());
+                compatibleItem.setTotalPrice(compatibleItem.getQuantity() * compatibleItem.getUnitPrice());
+                
+                // Update customization details
+                String existingDetails = compatibleItem.getCustomizationDetails();
+                String newDetails = existingDetails != null ? existingDetails : "";
+                
+                if (product.getCategory().equals("Add-ons")) {
+                    newDetails += (newDetails.isEmpty() ? "" : ", ") + "Add-on: " + product.getName();
+                } else {
+                    newDetails += (newDetails.isEmpty() ? "" : ", ") + "Cup: " + product.getName();
+                }
+                
+                compatibleItem.setCustomizationDetails(newDetails);
+                shoppingCartTable.refresh();
+                return;
+            }
+        }
+        
+        // Check if the exact same customized product already exists in cart
+        for (OrderItem item : shoppingCart) {
+            if (item.getProductId() == product.getId() && 
+                areCustomizationsEqual(item, selectedSize, selectedAddOn)) {
+                // Update quantity for existing customized item
+                item.setQuantity(item.getQuantity() + quantity);
+                item.setTotalPrice(item.getQuantity() * item.getUnitPrice());
+                shoppingCartTable.refresh();
+                return;
+            }
+        }
+        
+        // Create customization details string
+        String customizationDetails = "";
+        if (selectedSize != null && !selectedSize.equals("Medium")) {
+            customizationDetails += "Size: " + selectedSize;
+        }
+        if (selectedAddOn != null && !selectedAddOn.equals("None")) {
+            if (!customizationDetails.isEmpty()) customizationDetails += ", ";
+            customizationDetails += "Add-on: " + selectedAddOn;
+        }
+        
+        // Add new customized item to cart
+        OrderItem newItem = new OrderItem(
+            0, // orderId will be set when order is placed
+            product.getId(),
+            customProductName,
+            quantity,
+            totalPrice / quantity, // unit price
+            totalPrice,
+            selectedSize,
+            selectedAddOn,
+            customizationDetails.isEmpty() ? null : customizationDetails,
+            product.getCategory()
+        );
+        
+        shoppingCart.add(newItem);
+    }
+    
+    // Helper method to check if customizations match
+    private boolean areCustomizationsEqual(OrderItem item, String size, String addOn) {
+        String itemAddOn = item.getAddOn();
+        
+        // Handle null values for add-ons only
+        if (itemAddOn == null) itemAddOn = "None";
+        if (addOn == null) addOn = "None";
+        
+        return itemAddOn.equals(addOn);
+    }
+
     private void removeFromCart(OrderItem item) {
         shoppingCart.remove(item);
     }
@@ -328,6 +538,31 @@ public class OrderController implements Initializable {
                                  .mapToDouble(OrderItem::getTotalPrice)
                                  .sum();
         orderTotalField.setText("₱" + decimalFormat.format(total));
+    }
+
+    private void clearOrderForm() {
+        customerNameField.setText("None"); // Set default value to "None"
+        shoppingCart.clear();
+        orderTotalField.setText("₱0.00");
+        orderTypeComboBox.setValue("Dine-in");
+        paymentMethodComboBox.setValue("Cash");
+    }
+
+    @FXML
+    private void handlePlaceOrder(ActionEvent event) {
+        if (!shoppingCart.isEmpty()) {
+            // Ensure customer name is set to "None" if empty
+            if (customerNameField.getText().trim().isEmpty()) {
+                customerNameField.setText("None");
+            }
+            
+            if (placeOrder()) {
+                showAlert(Alert.AlertType.INFORMATION, "Success", "Order placed successfully!");
+                clearOrderForm();
+            }
+        } else {
+            showAlert(Alert.AlertType.WARNING, "Validation Error", "Please add items to cart before placing order.");
+        }
     }
 
     @FXML
@@ -343,250 +578,136 @@ public class OrderController implements Initializable {
     }
 
     @FXML
-    private void handlePlaceOrder(ActionEvent event) {
-        if (validateOrderForm()) {
-            if (placeOrder()) {
-                showAlert(Alert.AlertType.INFORMATION, "Success", "Order placed successfully!");
-                clearOrderForm();
-            }
-        }
-    }
-
-    @FXML
     private void handleClearCart(ActionEvent event) {
-        Alert confirmAlert = new Alert(Alert.AlertType.CONFIRMATION);
-        confirmAlert.setTitle("Clear Order");
-        confirmAlert.setHeaderText("Clear Order Confirmation");
-        confirmAlert.setContentText("Are you sure you want to clear all items from the Order?");
-        
-        Optional<ButtonType> result = confirmAlert.showAndWait();
-        if (result.isPresent() && result.get() == ButtonType.OK) {
-            shoppingCart.clear();
-            clearOrderForm();
+        if (!shoppingCart.isEmpty()) {
+            Alert confirmAlert = new Alert(Alert.AlertType.CONFIRMATION);
+            confirmAlert.setTitle("Clear Cart");
+            confirmAlert.setHeaderText("Are you sure you want to clear the cart?");
+            confirmAlert.setContentText("All items will be removed from your cart.");
+
+            Optional<ButtonType> result = confirmAlert.showAndWait();
+            if (result.isPresent() && result.get() == ButtonType.OK) {
+                shoppingCart.clear();
+                showAlert(Alert.AlertType.INFORMATION, "Cart Cleared", "All items have been removed from your cart.");
+            }
         }
     }
 
     @FXML
     private void handlePrintReceipt(ActionEvent event) {
-        // Check if there's a recent order to print receipt for
-        if (lastPlacedOrderId == null || lastPlacedOrderId.isEmpty()) {
-            showAlert(Alert.AlertType.WARNING, "No Recent Order", 
-                     "Please place an order first before printing a receipt.");
-            return;
-        }
-        
-        // Check if we have the last order data
-        if (lastOrderData == null || lastOrderData.isEmpty()) {
-            showAlert(Alert.AlertType.WARNING, "No Order Data", 
-                     "No order data available for receipt printing.");
-            return;
-        }
-        
-        // Get current stage for file chooser
-        Stage currentStage = (Stage) receiptButton.getScene().getWindow();
-        
-        // Generate receipt using the ReceiptGenerator
-        boolean success = ReceiptGenerator.generateReceipt(
-            currentStage,
-            lastPlacedOrderId,
-            lastCustomerName != null ? lastCustomerName : "Walk-in Customer",
-            lastOrderType != null ? lastOrderType : "Dine-in",
-            lastPaymentMethod != null ? lastPaymentMethod : "Cash",
-            lastTotalAmount,
-            lastOrderData
-        );
-        
-        if (success) {
-            System.out.println("Receipt generated successfully for order: " + lastPlacedOrderId);
-        }
-    }
-
-    // Add fields to store last order information for receipt generation
-    private String lastPlacedOrderId;
-    private String lastCustomerName;
-    private String lastOrderType;
-    private String lastPaymentMethod;
-    private double lastTotalAmount;
-    private List<OrderItem> lastOrderData;
-
-    private boolean validateOrderForm() {
-        if (customerNameField.getText().trim().isEmpty()) {
-            showAlert(Alert.AlertType.WARNING, "Validation Error", "Please enter customer name.");
-            return false;
-        }
-        
         if (shoppingCart.isEmpty()) {
-            showAlert(Alert.AlertType.WARNING, "Validation Error", "Please add items to cart before placing order.");
-            return false;
+            showAlert(Alert.AlertType.WARNING, "No Items", "Please add items to cart before printing receipt.");
+            return;
         }
-        
-        if (orderTypeComboBox.getValue() == null) {
-            showAlert(Alert.AlertType.WARNING, "Validation Error", "Please select order type.");
-            return false;
-        }
-        
-        if (paymentMethodComboBox.getValue() == null) {
-            showAlert(Alert.AlertType.WARNING, "Validation Error", "Please select payment method.");
-            return false;
-        }
-        
-        return true;
-    }
 
-    private boolean placeOrder() {
-        Connection connection = null;
-        
+        String customerName = customerNameField.getText().trim();
+        if (customerName.isEmpty()) {
+            customerName = "None";
+            customerNameField.setText(customerName);
+        }
+
         try {
-            connection = SqliteConnection.Connector();
-            connection.setAutoCommit(false);
+            // Generate unique order ID using OrderIdGenerator
+            String orderId = OrderIdGenerator.generateOrderId();
             
-            // Generate custom order ID using OrderIdGenerator
-            String customOrderId = OrderIdGenerator.generateOrderId();
-            
-            // Prepare date and time as TEXT per DB schema
-            LocalDateTime now = LocalDateTime.now();
-            String orderDateStr = now.toLocalDate().toString(); // YYYY-MM-DD
-            String orderTimeStr = now.toLocalTime().format(DateTimeFormatter.ofPattern("HH:mm:ss"));
-            
-            // Modified query to include custom order_id
-            String orderQuery = "INSERT INTO orders (id, customer_name, order_type, payment_method, total_amount, order_date, order_time, order_status) VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
-            PreparedStatement orderStatement = connection.prepareStatement(orderQuery);
-            
+            // Get order details
+            String orderType = orderTypeComboBox.getValue();
+            String paymentMethod = paymentMethodComboBox.getValue();
             double totalAmount = shoppingCart.stream().mapToDouble(OrderItem::getTotalPrice).sum();
             
-            orderStatement.setString(1, customOrderId); // Use custom generated ID
-            orderStatement.setString(2, customerNameField.getText().trim());
-            orderStatement.setString(3, orderTypeComboBox.getValue());
-            orderStatement.setString(4, paymentMethodComboBox.getValue());
-            orderStatement.setDouble(5, totalAmount);
-            orderStatement.setString(6, orderDateStr);
-            orderStatement.setString(7, orderTimeStr);
-            orderStatement.setString(8, "Completed");
+            // Get current stage
+            Stage currentStage = (Stage) ((Node) event.getSource()).getScene().getWindow();
             
-            orderStatement.executeUpdate();
+            // Convert shopping cart to list for receipt generator
+            List<OrderItem> orderItems = new ArrayList<>(shoppingCart);
             
-            // Insert order items using the custom order ID
-            String itemQuery = "INSERT INTO order_items (order_id, product_id, product_name, quantity, unit_price, total_price) VALUES (?, ?, ?, ?, ?, ?)";
-            PreparedStatement itemStatement = connection.prepareStatement(itemQuery);
+            // Generate receipt using ReceiptGenerator
+            boolean success = ReceiptGenerator.generateReceipt(
+                currentStage, 
+                orderId,
+                customerName,
+                orderType, 
+                paymentMethod, 
+                totalAmount, 
+                orderItems
+            );
             
-            for (OrderItem item : shoppingCart) {
-                itemStatement.setString(1, customOrderId); // Use custom order ID
-                itemStatement.setInt(2, item.getProductId());
-                itemStatement.setString(3, item.getProductName());
-                itemStatement.setInt(4, item.getQuantity());
-                itemStatement.setDouble(5, item.getUnitPrice());
-                itemStatement.setDouble(6, item.getTotalPrice());
-                itemStatement.addBatch();
-                
-                String updateStockQuery = "UPDATE products SET stock = stock - ? WHERE id = ?";
-                try (PreparedStatement stockStatement = connection.prepareStatement(updateStockQuery)) {
-                    stockStatement.setInt(1, item.getQuantity());
-                    stockStatement.setInt(2, item.getProductId());
-                    stockStatement.executeUpdate();
-                }
+            if (success) {
+                showAlert(Alert.AlertType.INFORMATION, "Receipt", "Receipt generated and saved successfully!");
             }
-            
-            itemStatement.executeBatch();
-            itemStatement.close();
-            orderStatement.close();
-            connection.commit();
-            
-            // Show success message with the generated order ID
-            showAlert(Alert.AlertType.INFORMATION, "Success", 
-                     "Order placed successfully!\nOrder ID: " + customOrderId);
-            
-            // Save last order information for receipt generation
-            lastPlacedOrderId = customOrderId;
-            lastCustomerName = customerNameField.getText().trim();
-            lastOrderType = orderTypeComboBox.getValue();
-            lastPaymentMethod = paymentMethodComboBox.getValue();
-            lastTotalAmount = totalAmount;
-            lastOrderData = new ArrayList<>(shoppingCart);
-            
-            return true;
-            
-        } catch (SQLException e) {
-            try {
-                if (connection != null) connection.rollback();
-            } catch (SQLException rollbackEx) {
-                rollbackEx.printStackTrace();
-            }
-            showAlert(Alert.AlertType.ERROR, "Database Error", "Error placing order: " + e.getMessage());
-            return false;
-        } finally {
-            try {
-                if (connection != null) {
-                    connection.setAutoCommit(true);
-                    connection.close();
-                }
-            } catch (SQLException e) {
-                e.printStackTrace();
-            }
-        }
-    }
 
-    private void clearOrderForm() {
-        customerNameField.setText("None");
-        orderTypeComboBox.setValue("Dine-in");
-        paymentMethodComboBox.setValue("Cash");
-        orderTotalField.setText("₱0.00");
-        shoppingCart.clear();
+        } catch (Exception e) {
+            showAlert(Alert.AlertType.ERROR, "Error", "Could not generate receipt: " + e.getMessage());
+            e.printStackTrace();
+        }
     }
 
     // Navigation methods
     @FXML
     private void handleDashboardButton(ActionEvent event) {
-        navigateToScene(event, "/view/fxml/Dashboard.fxml");
+        try {
+            loadScene(event, "/view/fxml/Dashboard.fxml");
+        } catch (IOException e) {
+            showAlert(Alert.AlertType.ERROR, "Error", "Could not load Dashboard page: " + e.getMessage());
+        }
     }
 
     @FXML
     private void handleInventoryButton(ActionEvent event) {
-        navigateToScene(event, "/view/fxml/Inventory.fxml");
+        try {
+            loadScene(event, "/view/fxml/Inventory.fxml");
+        } catch (IOException e) {
+            showAlert(Alert.AlertType.ERROR, "Error", "Could not load Inventory page: " + e.getMessage());
+        }
     }
 
     @FXML
     private void handleOrderButton(ActionEvent event) {
         // Already on order page
+        loadAvailableProducts();
     }
 
     @FXML
     private void handleRecentOrderButton(ActionEvent event) {
-        navigateToScene(event, "/view/fxml/RecentOrder.fxml");
+        try {
+            loadScene(event, "/view/fxml/RecentOrder.fxml");
+        } catch (IOException e) {
+            showAlert(Alert.AlertType.ERROR, "Error", "Could not load Recent Orders page: " + e.getMessage());
+        }
     }
 
     @FXML
     private void handleLogoutButton(ActionEvent event) {
-        Alert confirmAlert = new Alert(Alert.AlertType.CONFIRMATION);
-        confirmAlert.setTitle("Logout");
-        confirmAlert.setHeaderText("Confirm Logout");
-        confirmAlert.setContentText("Are you sure you want to logout?");
-        
-        Optional<ButtonType> result = confirmAlert.showAndWait();
+        Alert alert = new Alert(Alert.AlertType.CONFIRMATION);
+        alert.setTitle("Logout Confirmation");
+        alert.setHeaderText("Are you sure you want to logout?");
+        alert.setContentText("You will be redirected to the login page.");
+
+        Optional<ButtonType> result = alert.showAndWait();
         if (result.isPresent() && result.get() == ButtonType.OK) {
-            navigateToScene(event, "/view/fxml/LoginPage.fxml");
+            try {
+                loadScene(event, "/view/fxml/LoginPage.fxml");
+            } catch (IOException e) {
+                showAlert(Alert.AlertType.ERROR, "Error", "Could not load Login page: " + e.getMessage());
+            }
         }
     }
 
-    private void navigateToScene(ActionEvent event, String fxmlPath) {
-        try {
-            Parent root = FXMLLoader.load(getClass().getResource(fxmlPath));
-            Stage stage = (Stage) ((Node) event.getSource()).getScene().getWindow();
-            Scene scene = new Scene(root);
-            stage.setTitle("Sebucha Order Management System");
-            stage.setScene(scene);
-            stage.show();
-        } catch (IOException e) {
-            showAlert(Alert.AlertType.ERROR, "Navigation Error", "Could not load page: " + e.getMessage());
-        }
+    // Utility methods
+    private void loadScene(ActionEvent event, String fxmlPath) throws IOException {
+        Parent root = FXMLLoader.load(getClass().getResource(fxmlPath));
+        Stage stage = (Stage) ((Node) event.getSource()).getScene().getWindow();
+        Scene scene = new Scene(root);
+        stage.setTitle("Sebucha Order Management System");
+        stage.setScene(scene);
+        stage.show();
     }
 
-    private void showAlert(Alert.AlertType alertType, String title, String message) {
-        Platform.runLater(() -> {
-            Alert alert = new Alert(alertType);
-            alert.setTitle(title);
-            alert.setHeaderText(null);
-            alert.setContentText(message);
-            alert.showAndWait();
-        });
+    private void showAlert(Alert.AlertType type, String title, String message) {
+        Alert alert = new Alert(type);
+        alert.setTitle(title);
+        alert.setHeaderText(null);
+        alert.setContentText(message);
+        alert.showAndWait();
     }
 }
