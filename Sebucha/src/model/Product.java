@@ -35,7 +35,6 @@ public class Product {
         this.stock = stock;
         this.status = status;
         this.imagePath = imagePath;
-        // Convert string to LocalDateTime if needed
         this.dateAdded = LocalDateTime.now(); // Default to current time
     }
 
@@ -48,7 +47,6 @@ public class Product {
         this.stock = stock;
         this.status = status;
         this.imagePath = imagePath;
-        // Convert Unix timestamp to LocalDateTime
         this.dateAdded = java.time.LocalDateTime.ofInstant(
             java.time.Instant.ofEpochSecond(unixTimestamp), 
             java.time.ZoneId.systemDefault()
