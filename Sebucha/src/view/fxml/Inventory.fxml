@@ -214,19 +214,14 @@
                         <!-- Product Image Section -->
                         <AnchorPane layoutX="660.0" layoutY="14.0" prefHeight="280.0" prefWidth="625.0" style="-fx-background-color: #F5EDE0; -fx-background-radius: 20; -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.2), 20, 0, 0, 5);">
                            <children>
-                              <Label layoutX="25.0" layoutY="20.0" style="-fx-font-weight: bold; -fx-text-fill: #2C2C2C;" text="Product Image">
-                                 <font>
-                                    <Font name="Calibri Bold" size="20.0" />
-                                 </font>
-                              </Label>
                               
-                              <ImageView fx:id="productImageView" fitHeight="180.0" fitWidth="200.0" layoutX="25.0" layoutY="60.0" pickOnBounds="true" preserveRatio="true" style="-fx-background-color: white; -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.1), 8, 0, 0, 2);">
+                              <ImageView fx:id="productImageView" fitHeight="180.0" fitWidth="200.0" layoutX="147.0" layoutY="70.0" pickOnBounds="true" preserveRatio="true" style="-fx-background-color: white; -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.1), 8, 0, 0, 2);">
                                  <image>
                                     <Image url="@../images/addimage.png" />
                                  </image>
                               </ImageView>
                               
-                              <Button fx:id="selectImageButton" layoutX="250.0" layoutY="100.0" mnemonicParsing="false" onAction="#handleSelectImage" prefHeight="40.0" prefWidth="140.0" style="-fx-background-color: linear-gradient(to bottom, #C4B5FD 0%, #8B5CF6 50%, #5B21B6 100%); -fx-background-radius: 12; -fx-effect: dropshadow(gaussian, rgba(255,152,0,0.4), 8, 0, 0, 2); -fx-cursor: hand;" text="Select Image" textFill="WHITE">
+                              <Button fx:id="selectImageButton" layoutX="365.0" layoutY="100.0" mnemonicParsing="false" onAction="#handleSelectImage" prefHeight="40.0" prefWidth="140.0" style="-fx-background-color: linear-gradient(to bottom, #C4B5FD 0%, #8B5CF6 50%, #5B21B6 100%); -fx-background-radius: 12; -fx-effect: dropshadow(gaussian, rgba(255,152,0,0.4), 8, 0, 0, 2); -fx-cursor: hand;" text="Select Image" textFill="WHITE">
                                  <font>
                                     <Font name="Calibri Bold" size="14.0" />
                                  </font>
@@ -235,7 +230,7 @@
                                  </graphic>
                               </Button>
                               
-                              <Button fx:id="removeImageButton" layoutX="250.0" layoutY="160.0" mnemonicParsing="false" onAction="#handleRemoveImage" prefHeight="40.0" prefWidth="140.0" style="-fx-background-color: linear-gradient(to bottom, #BDBDBD, #9E9E9E); -fx-background-radius: 12; -fx-effect: dropshadow(gaussian, rgba(158,158,158,0.4), 8, 0, 0, 2); -fx-cursor: hand;" text="Remove Image" textFill="WHITE">
+                              <Button fx:id="removeImageButton" layoutX="365.0" layoutY="160.0" mnemonicParsing="false" onAction="#handleRemoveImage" prefHeight="40.0" prefWidth="140.0" style="-fx-background-color: linear-gradient(to bottom, #EF4444 0%, #DC2626 50%, #991B1B 100%); -fx-background-radius: 12; -fx-effect: dropshadow(gaussian, rgba(158,158,158,0.4), 8, 0, 0, 2); -fx-cursor: hand;" text="Remove Image" textFill="WHITE">
                                  <font>
                                     <Font name="Calibri Bold" size="14.0" />
                                  </font>
@@ -243,21 +238,9 @@
                                     <FontIcon iconColor="WHITE" iconLiteral="bi-x-circle" iconSize="16" />
                                  </graphic>
                               </Button>
-                              
-                              <TextField fx:id="imagePathField" editable="false" layoutX="405.0" layoutY="100.0" prefHeight="40.0" prefWidth="195.0" promptText="Image file path" style="-fx-background-color: linear-gradient(to bottom, #FFFFFF, #E2E8F0); -fx-background-radius: 8; -fx-border-color: #E0E0E0; -fx-border-radius: 8; -fx-border-width: 1;">
-                                 <font>
-                                    <Font name="Calibri" size="12.0" />
-                                 </font>
-                              </TextField>
-                              
-                              <Label layoutX="405.0" layoutY="82.0" style="-fx-text-fill: #2C2C2C;" text="Image Path:">
-                                 <font>
-                                    <Font name="Calibri Bold" size="14.0" />
-                                 </font>
-                              </Label>
                               <Button fx:id="refreshButton" layoutX="538.0" layoutY="14.0" mnemonicParsing="false" onAction="#handleRefreshButton" prefHeight="22.0" prefWidth="73.0" style="-fx-background-color: linear-gradient(to bottom, #FFB75E, #ED8F03); -fx-background-radius: 12; -fx-effect: dropshadow(gaussian, rgba(112,130,56,0.4), 8, 0, 0, 2); -fx-cursor: hand;" text="Refresh" textFill="WHITE">
                                  <font>
-                                    <Font name="Calibri Bold" size="12.0" />
+                                    <Font name="Calibri" size="12.0" />
                                  </font>
                                  <graphic>
                                     <FontIcon iconColor="WHITE" iconLiteral="bi-arrow-clockwise" iconSize="14" />
@@ -280,10 +263,12 @@
                                     <TableColumn fx:id="idColumn" prefWidth="80.0" text="ID" />
                                     <TableColumn fx:id="imageColumn" prefWidth="120.0" text="Image" />
                                     <TableColumn fx:id="nameColumn" prefWidth="250.0" text="Product Name" />
+                                    <TableColumn fx:id="statusColumn" prefWidth="140.0" text="Status" />
+                                    <TableColumn fx:id="stockColumn" prefWidth="140.0" text="Stock" />
                                     <TableColumn fx:id="categoryColumn" prefWidth="170.0" text="Category" />
                                     <TableColumn fx:id="priceColumn" prefWidth="150.0" text="Price (₱)" />
-                                    <TableColumn fx:id="stockColumn" prefWidth="140.0" text="Stock" />
-                                    <TableColumn fx:id="statusColumn" prefWidth="140.0" text="Status" />
+                                  
+                                    
                                     <TableColumn fx:id="dateColumn" prefWidth="180.0" text="Date Added" />
                                  </columns>
                                  <cursor>
