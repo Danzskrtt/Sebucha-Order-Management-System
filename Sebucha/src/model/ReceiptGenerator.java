@@ -1,9 +1,9 @@
 package model;
 
 import javafx.stage.FileChooser;
+
 import javafx.stage.Stage;
 import javafx.scene.control.Alert;
-
 import java.io.FileWriter;
 import java.io.File;
 import java.time.LocalDateTime;
