@@ -4,7 +4,6 @@ import javafx.application.Platform;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
-import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.fxml.Initializable;
@@ -16,7 +15,6 @@ import javafx.stage.FileChooser;
 import javafx.stage.Stage;
 import model.Order;
 import model.SqliteConnection;
-
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
@@ -29,8 +27,6 @@ import java.text.DecimalFormat;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Optional;
 import java.util.ResourceBundle;
 
@@ -52,11 +48,11 @@ public class RecentOrderController implements Initializable {
     @FXML private Button refreshButton;
     @FXML private Button clearFiltersButton;
     @FXML private Button exportButton;
-    @FXML private Button resetButton; // Add reset button to RecentOrderController
+    @FXML private Button resetButton;
 
     // Orders table
     @FXML private TableView<Order> ordersTable;
-    @FXML private TableColumn<Order, String> orderIdColumn; // Changed from Integer to String
+    @FXML private TableColumn<Order, String> orderIdColumn; 
     @FXML private TableColumn<Order, String> customerNameColumn;
     @FXML private TableColumn<Order, String> orderDateColumn;
     @FXML private TableColumn<Order, String> orderTypeColumn;
@@ -114,7 +110,7 @@ public class RecentOrderController implements Initializable {
             return new SimpleStringProperty(itemsSummary);
         });
         
-        // Actions column with styled button
+        // Actions column with "View Details" button
         actionsColumn.setCellFactory(col -> new TableCell<Order, String>() {
             private final Button viewButton = new Button("View Details");
             
@@ -197,7 +193,7 @@ public class RecentOrderController implements Initializable {
                     
                     // Create order object using String ID to support generated order IDs
                     Order order = new Order(
-                        resultSet.getString("id"), // Changed from getInt to getString
+                        resultSet.getString("id"), 
                         resultSet.getString("customer_name"),
                         resultSet.getString("order_type"),
                         resultSet.getString("payment_method"),
@@ -233,7 +229,7 @@ public class RecentOrderController implements Initializable {
                 return LocalDateTime.now();
             }
             if (timePart == null || timePart.isEmpty()) {
-                return parseOrderDate(datePart); // fallback to date-only
+                return parseOrderDate(datePart); 
             }
             return LocalDateTime.parse(datePart + "T" + timePart);
         } catch (Exception ex) {
@@ -443,132 +439,6 @@ public class RecentOrderController implements Initializable {
         }
     }
 
-    @FXML
-    private void handleResetButton() {
-        // First confirmation dialog - Step 1
-        Alert firstConfirmation = new Alert(Alert.AlertType.WARNING);
-        firstConfirmation.setTitle("Reset Confirmation - Step 1");
-        firstConfirmation.setHeaderText("Are you sure you want to reset ALL order history and dashboard data?");
-        firstConfirmation.setContentText("This action will permanently delete:\n" +
-                                        "• All order records from the database\n" +
-                                        "• All order items and transaction history\n" +
-                                        "• Dashboard revenue and statistics\n" +
-                                        "• Recent order history display\n\n" +
-                                        "Do you want to continue?");
-        
-        // Add custom buttons for first confirmation
-        ButtonType continueButton = new ButtonType("Continue");
-        ButtonType cancelButton = new ButtonType("Cancel", ButtonType.CANCEL.getButtonData());
-        firstConfirmation.getButtonTypes().setAll(continueButton, cancelButton);
-        
-        Optional<ButtonType> firstResult = firstConfirmation.showAndWait();
-        
-        if (firstResult.isPresent() && firstResult.get() == continueButton) {
-            // Second confirmation dialog - Step 2 (Final Warning)
-            Alert secondConfirmation = new Alert(Alert.AlertType.ERROR);
-            secondConfirmation.setTitle("Reset Confirmation - Step 2");
-            secondConfirmation.setHeaderText("FINAL WARNING: This will permanently delete ALL order data!");
-            secondConfirmation.setContentText("This action cannot be undone and will:\n\n" +
-                                            "🗑️ DELETE ALL ORDERS from database\n" +
-                                            "🗑️ DELETE ALL ORDER ITEMS\n" +
-                                            "📊 RESET Dashboard to ₱0.00\n" +
-                                            "📈 CLEAR All charts and statistics\n" +
-                                            "📋 EMPTY Recent orders table\n\n" +
-                                            "⚠️ THIS CANNOT BE REVERSED! ⚠️\n\n" +
-                                            "Are you absolutely sure you want to proceed?");
-            
-            // Add custom buttons for second confirmation
-            ButtonType resetButton = new ButtonType("Yes, Delete Everything");
-            ButtonType keepDataButton = new ButtonType("No, Keep Data", ButtonType.CANCEL.getButtonData());
-            secondConfirmation.getButtonTypes().setAll(resetButton, keepDataButton);
-            
-            Optional<ButtonType> secondResult = secondConfirmation.showAndWait();
-            
-            if (secondResult.isPresent() && secondResult.get() == resetButton) {
-                // Only proceed with reset if both confirmations are accepted
-                performCompleteReset();
-                showAlert("Reset Complete", 
-                         "All order history has been permanently deleted!\n" +
-                         "Dashboard and charts have been reset.\n" +
-                         "System is now ready for new orders.");
-            } else {
-                // User cancelled at second step
-                showAlert("Reset Cancelled", "All order data has been preserved.");
-            }
-        } else {
-            // User cancelled at first step
-            showAlert("Reset Cancelled", "No changes were made to order data.");
-        }
-    }
-    
-    /**
-     * Performs complete reset of all order data and dashboard statistics
-     * This method deletes all orders and order_items from the database
-     */
-    private void performCompleteReset() {
-        Connection connection = null;
-        
-        try {
-            connection = SqliteConnection.Connector();
-            connection.setAutoCommit(false); // Start transaction
-            
-            // Delete all order items first (due to foreign key constraints)
-            String deleteOrderItemsQuery = "DELETE FROM order_items";
-            PreparedStatement deleteItemsStatement = connection.prepareStatement(deleteOrderItemsQuery);
-            int itemsDeleted = deleteItemsStatement.executeUpdate();
-            
-            // Delete all orders
-            String deleteOrdersQuery = "DELETE FROM orders";
-            PreparedStatement deleteOrdersStatement = connection.prepareStatement(deleteOrdersQuery);
-            int ordersDeleted = deleteOrdersStatement.executeUpdate();
-            
-            // Reset auto-increment counters (if applicable)
-            try {
-                PreparedStatement resetSequence = connection.prepareStatement("DELETE FROM sqlite_sequence WHERE name IN ('orders', 'order_items')");
-                resetSequence.executeUpdate();
-                resetSequence.close();
-            } catch (SQLException e) {
-                // sqlite_sequence might not exist, this is okay
-                System.out.println("Note: sqlite_sequence table not found or reset not needed");
-            }
-            
-            connection.commit(); // Commit transaction
-            
-            // Clear local data collections
-            allOrders.clear();
-            filteredOrders.clear();
-            
-            // Update UI to reflect the reset
-            updateSummaryStatistics();
-            updateDateRangeLabel();
-            
-            // Log the reset operation
-            System.out.println("=== COMPLETE RESET PERFORMED ===");
-            System.out.println("Orders deleted: " + ordersDeleted);
-            System.out.println("Order items deleted: " + itemsDeleted);
-            System.out.println("Dashboard reset: Complete");
-            System.out.println("===============================");
-            
-        } catch (SQLException e) {
-            try {
-                if (connection != null) connection.rollback();
-            } catch (SQLException rollbackEx) {
-                rollbackEx.printStackTrace();
-            }
-            showAlert("Reset Failed", "Error during reset operation: " + e.getMessage());
-            e.printStackTrace();
-        } finally {
-            try {
-                if (connection != null) {
-                    connection.setAutoCommit(true);
-                    connection.close();
-                }
-            } catch (SQLException e) {
-                e.printStackTrace();
-            }
-        }
-    }
-
     private void exportToCSV(File file) {
         try (FileWriter writer = new FileWriter(file)) {
             writer.append("Order ID,Customer,Date & Time,Type,Payment,Amount,Status,Items\n");
@@ -653,9 +523,7 @@ public class RecentOrderController implements Initializable {
 
     // Add methods for getting dashboard metrics from recent orders
     
-    /**
-     * Get today's income within the last 24 hours
-     */
+    //Get today's income within the last 24 hours
     public double getTodaysIncome() {
         Connection connection = null;
         double todaysIncome = 0.0;
@@ -685,9 +553,7 @@ public class RecentOrderController implements Initializable {
         return todaysIncome;
     }
     
-    /**
-     * Get products sold within the last 24 hours
-     */
+    //Get products sold within the last 24 hours
     public int getTodaysProductsSold() {
         Connection connection = null;
         int productsSold = 0;
@@ -718,9 +584,7 @@ public class RecentOrderController implements Initializable {
         return productsSold;
     }
     
-    /**
-     * Get total revenue from all orders
-     */
+    // total revenue from all orders    
     public double getTotalRevenue() {
         Connection connection = null;
         double totalRevenue = 0.0;
