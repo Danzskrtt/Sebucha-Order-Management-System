@@ -2,7 +2,6 @@ package controller;
 
 import javafx.fxml.FXML;
 
-
 import javafx.scene.control.Label;
 import java.net.URL;
 import java.sql.SQLException;
@@ -97,7 +96,7 @@ public class LoginPageController implements Initializable {
             if(loginmodel.isLogin(username.trim(), password)) {
                 // Navigate to Dashboard
                 try {
-                    FXMLLoader loader = new FXMLLoader(getClass().getResource("/view/fxml/Dashboard.fxml")); // adjusted path (file must exist)
+                    FXMLLoader loader = new FXMLLoader(getClass().getResource("/view/fxml/Dashboard.fxml"));
                     Parent root = loader.load();
                     
                     Stage stage = (Stage) ((Node) event.getSource()).getScene().getWindow();
