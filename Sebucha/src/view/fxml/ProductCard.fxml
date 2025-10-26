@@ -1,89 +1,89 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<?import javafx.geometry.Insets?>
 <?import javafx.scene.Cursor?>
 <?import javafx.scene.control.Button?>
+<?import javafx.scene.control.ComboBox?>
 <?import javafx.scene.control.Label?>
 <?import javafx.scene.control.Spinner?>
 <?import javafx.scene.image.ImageView?>
-<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.AnchorPane?>
 <?import javafx.scene.layout.StackPane?>
-<?import javafx.scene.layout.VBox?>
-<?import javafx.scene.text.Font?>
+<?import org.kordamp.ikonli.javafx.FontIcon?>
 
-<StackPane maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="380.0" prefWidth="280.0" style="-fx-background-color: linear-gradient(to bottom, #FFFFFF 0%, #F8FAFC 50%, #F1F5F9 100%); -fx-background-radius: 20; -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.12), 16, 0.3, 0, 4);" xmlns="http://javafx.com/javafx/25" xmlns:fx="http://javafx.com/fxml/1" fx:controller="controller.ProductCardController">
-   
+<StackPane maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="500.0" prefWidth="320.0" style="-fx-background-color: white; -fx-background-radius: 20px; -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.12), 25, 0, 0, 8); -fx-border-color: #e2e8f0; -fx-border-radius: 20px; -fx-border-width: 1px;" xmlns="http://javafx.com/javafx/25" xmlns:fx="http://javafx.com/fxml/1" fx:controller="controller.ProductCardController">
    <children>
-      <VBox alignment="TOP_CENTER" spacing="10.0" StackPane.alignment="CENTER">
+      <AnchorPane prefHeight="500.0" prefWidth="320.0">
          <children>
-            <!-- Product Image Section with enhanced StackPane -->
-            <StackPane prefHeight="170.0" prefWidth="240.0" style="-fx-background-color: linear-gradient(to bottom, #FFFFFF 0%, #F9FAFB 100%);                                -fx-background-radius: 16;                                -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.06), 8, 0.2, 0, 2);">
-               <children>
-                  <!-- Enhanced ImageView with better dimensions -->
-                  <ImageView fx:id="productImageView" fitHeight="150.0" fitWidth="150.0" pickOnBounds="true" preserveRatio="true" style="-fx-effect: dropshadow(gaussian, rgba(0,0,0,0.08), 10, 0.2, 0, 3);" StackPane.alignment="CENTER" />
-               </children>
-               <VBox.margin>
-                  <Insets top="15.0" />
-               </VBox.margin>
-            </StackPane>
             
-            <!-- Product Information Section with improved spacing -->
-            <VBox alignment="CENTER" prefWidth="240.0" spacing="8.0">
+            <!-- Product Image Container -->
+            <AnchorPane layoutX="20.0" layoutY="20.0" prefHeight="200.0" prefWidth="280.0" style="-fx-background-color: #f8fafc; -fx-background-radius: 16px; -fx-border-color: #e2e8f0; -fx-border-radius: 16px; -fx-border-width: 1px;">
                <children>
-                  <!-- Product Name with enhanced typography -->
-                  <Label fx:id="productNameLabel" alignment="CENTER" maxWidth="220.0" style="-fx-text-fill: linear-gradient(to right, #1E293B, #334155);                                 -fx-font-weight: 600;                                 -fx-letter-spacing: 0.3px;" styleClass="subheading" text="Product Name" textAlignment="CENTER" textOverrun="ELLIPSIS" wrapText="true">
-                     <font>
-                        <Font name="Segoe UI Semibold" size="17.0" />
-                     </font>
-                  </Label>
-                  
-                  <!-- Price with modern gradient accent -->
-                  <Label fx:id="productPriceLabel" alignment="CENTER" style="-fx-text-fill: linear-gradient(to right, #059669, #047857);                                 -fx-font-weight: bold;                                 -fx-letter-spacing: 0.4px;                                -fx-effect: dropshadow(gaussian, rgba(5,150,105,0.2), 4, 0, 0, 1);" styleClass="price-cell" text="₱0.00" textAlignment="CENTER">
-                     <font>
-                        <Font name="Segoe UI Bold" size="18.0" />
-                     </font>
-                  </Label>
-                  
-                  <!-- Enhanced Category and Stock badges with better colors -->
-                  <HBox alignment="CENTER" prefWidth="240.0" spacing="16.0">
+                  <StackPane AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
                      <children>
-                        <Label fx:id="productCategoryLabel" alignment="CENTER" style="-fx-text-fill: white; -fx-background-color: linear-gradient(to bottom, #6B7280 0%, #374151 100%); -fx-background-radius: 14; -fx-padding: 6 12 6 12; -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.08), 6, 0.1, 0, 2);" text="Category" textAlignment="CENTER" textFill="WHITE">
-                           <font>
-                              <Font name="Segoe UI Medium" size="11.0" />
-                           </font>
-                        </Label>
-                        
-                        <Label fx:id="productStockLabel" alignment="CENTER" style="-fx-text-fill: #065F46;                                       -fx-background-color: linear-gradient(to bottom, #ECFDF5 0%, #A7F3D0 100%);                                       -fx-background-radius: 14;                                       -fx-padding: 6 12 6 12;                                       -fx-effect: dropshadow(gaussian, rgba(5,150,105,0.15), 6, 0.1, 0, 2);" text="Stock: 0" textAlignment="CENTER">
-                           <font>
-                              <Font name="Segoe UI Semibold" size="11.0" />
-                           </font>
-                        </Label>
+                        <ImageView fx:id="productImageView" fitHeight="180.0" fitWidth="180.0" pickOnBounds="true" preserveRatio="true" style="-fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.15), 15, 0, 0, 5);" />
                      </children>
-                  </HBox>
+                  </StackPane>
                </children>
-            </VBox>
+            </AnchorPane>
             
-            <!-- Action Section - Quantity and Add Button with enhanced styling -->
-            <HBox alignment="CENTER" prefWidth="240.0" spacing="15.0">
+            <!-- Product Name -->
+            <Label fx:id="productNameLabel" alignment="CENTER" layoutX="20.0" layoutY="235.0" prefHeight="40.0" prefWidth="280.0" style="-fx-text-fill: #0f172a; -fx-font-family: 'Segoe UI'; -fx-font-weight: bold; -fx-font-size: 18px;" text="Product Name" textAlignment="CENTER" textOverrun="ELLIPSIS" wrapText="true">
+            </Label>
+            
+            <!-- Product Price -->
+            <Label fx:id="productPriceLabel" alignment="CENTER" layoutX="20.0" layoutY="275.0" prefHeight="35.0" prefWidth="280.0" style="-fx-text-fill: #059669; -fx-font-family: 'Segoe UI'; -fx-font-weight: bold; -fx-font-size: 24px;" text="₱0.00" textAlignment="CENTER">
+            </Label>
+            
+            <!-- Category and Stock Container -->
+            <AnchorPane layoutX="20.0" layoutY="315.0" prefHeight="40.0" prefWidth="280.0">
                <children>
-                  <!-- Modern Spinner with improved styling -->
-                  <Spinner fx:id="quantitySpinner" prefHeight="45.0" prefWidth="75.0" style="-fx-background-color: linear-gradient(to bottom, #FFFFFF 0%, #F8FAFC 100%); -fx-background-radius: 12; -fx-border-color: linear-gradient(to bottom, #E2E8F0, #CBD5E1); -fx-border-radius: 12; -fx-border-width: 1.5;">
-                     <cursor>
-                        <Cursor fx:constant="HAND" />
-                     </cursor></Spinner>
+                  <!-- Category Badge -->
+                  <Label fx:id="productCategoryLabel" alignment="CENTER" layoutX="0.0" layoutY="5.0" prefHeight="30.0" prefWidth="140.0" style="-fx-background-color: #e0f2fe; -fx-text-fill: #0277bd; -fx-background-radius: 15px; -fx-font-family: 'Segoe UI'; -fx-font-weight: bold; -fx-font-size: 12px; -fx-padding: 6px 12px;" text="Category" textAlignment="CENTER">
+                  </Label>
                   
-                  <!-- Add to Cart Button with modern look -->
-                  <Button fx:id="addToCartButton" alignment="CENTER" maxWidth="100.0" mnemonicParsing="false" onAction="#handleAddToCart" prefHeight="45.0" prefWidth="120.0" style="-fx-background-color: linear-gradient(to bottom, #059669 0%, #047857 100%);                                   -fx-background-radius: 12;                                   -fx-font-weight: bold;                                   -fx-text-fill: white;                                   -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.15), 8, 0.2, 0, 2);" text="Add to Cart">
-                     <font>
-                        <Font name="Segoe UI Bold" size="14.0" />
-                     </font>
+                  <!-- Stock Badge -->
+                  <Label fx:id="productStockLabel" alignment="CENTER" layoutX="190.0" layoutY="5.0" prefHeight="30.0" prefWidth="90.0" style="-fx-background-color: #dcfce7; -fx-text-fill: #166534; -fx-background-radius: 15px; -fx-font-family: 'Segoe UI'; -fx-font-weight: bold; -fx-font-size: 12px; -fx-padding: 6px 12px;" text="Stock: 0" textAlignment="CENTER">
+                  </Label>
+               </children>
+            </AnchorPane>
+            
+            <!-- Controls Container -->
+            <AnchorPane layoutX="20.0" layoutY="360.0" prefHeight="80.0" prefWidth="280.0">
+               <children>
+                  <!-- Add-ons Section -->
+                  <Label layoutX="0.0" layoutY="0.0" style="-fx-text-fill: #334155; -fx-font-family: 'Segoe UI'; -fx-font-weight: bold; -fx-font-size: 13px;" text="Add-ons:">
+                  </Label>
+                  
+                  <!-- Add-ons ComboBox -->
+                  <ComboBox fx:id="addOnsComboBox" layoutX="0.0" layoutY="25.0" prefHeight="35.0" prefWidth="180.0" promptText="Select Add-ons" style="-fx-background-color: white; -fx-border-color: #cbd5e1; -fx-border-radius: 8px; -fx-border-width: 1px;">
                      <cursor>
                         <Cursor fx:constant="HAND" />
                      </cursor>
-                  </Button>
+                  </ComboBox>
+                  
+                  <!-- Quantity Section -->
+                  <Label alignment="CENTER" layoutX="190.0" layoutY="0.0" prefHeight="20.0" prefWidth="90.0" style="-fx-text-fill: #334155; -fx-font-family: 'Segoe UI'; -fx-font-weight: bold; -fx-font-size: 13px;" text="Quantity:" textAlignment="CENTER">
+                  </Label>
+                  
+                  <!-- Quantity Spinner -->
+                  <Spinner fx:id="quantitySpinner" layoutX="190.0" layoutY="25.0" prefHeight="35.0" prefWidth="90.0" style="-fx-background-color: white; -fx-border-color: #cbd5e1; -fx-border-radius: 8px; -fx-border-width: 1px;">
+                     <cursor>
+                        <Cursor fx:constant="HAND" />
+                     </cursor>
+                  </Spinner>
                </children>
-            </HBox>
+            </AnchorPane>
+            
+            <!-- Add to Cart Button -->
+            <Button fx:id="addToCartButton" layoutX="19.0" layoutY="440.0" mnemonicParsing="false" onAction="#handleAddToCart" onMouseEntered="#handleButtonHover" onMouseExited="#handleButtonExit" prefHeight="45.0" prefWidth="280.0" style="-fx-background-color: #4f46e5; -fx-text-fill: white; -fx-background-radius: 12px; -fx-font-family: 'Segoe UI'; -fx-font-weight: 600; -fx-font-size: 16px;" text="Add to Cart">
+               <cursor>
+                  <Cursor fx:constant="HAND" />
+               </cursor>
+               <graphic>
+                  <FontIcon fill="WHITE" iconLiteral="bi-cart-plus" iconSize="25" />
+               </graphic>
+            </Button>
          </children>
-      </VBox>
+      </AnchorPane>
    </children>
 </StackPane>
