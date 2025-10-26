@@ -53,22 +53,23 @@ Developed as part of a mini thesis project, this system showcases how JavaFX and
 ## Screenshots
 
 Login Page
-<img width="1920" height="1080" alt="Screenshot 2025-10-14 002058" src="https://github.com/user-attachments/assets/b611c867-a6f2-446c-843b-82b94fb9e4ff" />
+<img width="998" height="785" alt="Screenshot 2025-10-26 214733" src="https://github.com/user-attachments/assets/63276416-ec7e-42c8-9d61-a3904d7c5de8" />
 
 Dashboard Page
-<img width="1920" height="1080" alt="Screenshot 2025-10-13 223821" src="https://github.com/user-attachments/assets/7548e7eb-aa40-4786-b8a6-6abeb327560c" />
+<img width="1874" height="973" alt="Screenshot 2025-10-26 214810" src="https://github.com/user-attachments/assets/cd440e0d-d24f-4329-8ea1-d736aa8e86e4" />
 
 Inventory Page
-<img width="1920" height="1080" alt="Screenshot 2025-10-13 223703" src="https://github.com/user-attachments/assets/b344efba-8502-4c1b-be67-6a7f5f9d508d" />
+<img width="1876" height="974" alt="Screenshot 2025-10-26 214840" src="https://github.com/user-attachments/assets/13078f2f-f5da-4f6c-a31f-5b1648b889ab" />
 
 Order Page
-<img width="1920" height="1080" alt="Screenshot 2025-10-13 223442" src="https://github.com/user-attachments/assets/14063c8e-8523-4ed0-b27a-051dc9c0dd1d" />
+<img width="1877" height="975" alt="Screenshot 2025-10-26 214855" src="https://github.com/user-attachments/assets/e6fd5860-f952-4ec6-bcf6-eb1649395191" />
 
 Product Card
-<img width="1920" height="1080" alt="Screenshot 2025-10-13 223405" src="https://github.com/user-attachments/assets/85d698b0-fe1d-41dc-a025-2a850a4d96fc" />
+<img width="401" height="619" alt="image" src="https://github.com/user-attachments/assets/4d58d0d3-996f-4d23-a054-25004a26f023" />
 
 Recent Order Page
-<img width="1920" height="1080" alt="Screenshot 2025-10-13 223222" src="https://github.com/user-attachments/assets/c5131c45-aa41-4cfd-ab96-6028bf9b6f4c" />
+<img width="1878" height="975" alt="Screenshot 2025-10-26 214912" src="https://github.com/user-attachments/assets/7e184f62-34f0-4c66-a65e-c8e899ef067d" />
+
 
 
 
