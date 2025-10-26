@@ -84,8 +84,6 @@
                <center>
                   <AnchorPane prefHeight="200.0" prefWidth="200.0" style="-fx-background-color: linear-gradient(to bottom, #2B2B2B, #1E1E1E);" BorderPane.alignment="CENTER">
                      <children>
-
-                        <!-- Filter and Search Section -->
                         <AnchorPane layoutX="15.0" layoutY="14.0" prefHeight="80.0" prefWidth="1270.0" style="-fx-background-color: #F5EDE0; -fx-background-radius: 20; -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.2), 20, 0, 0, 5);" styleClass="card">
                            <children>
                               <Label layoutX="20.0" layoutY="8.0" style="-fx-font-weight: bold; -fx-text-fill: #2C2C2C;" text="Filter Orders">
@@ -96,8 +94,6 @@
                                     <FontIcon iconLiteral="bi-funnel" iconSize="16" />
                                  </graphic>
                               </Label>
-                              
-                              <!-- Customer Search -->
                               <TextField fx:id="customerSearchField" layoutX="20.0" layoutY="35.0" prefHeight="35.0" prefWidth="200.0" promptText="Search by customer..." style="-fx-background-color: linear-gradient(to bottom, #FFFFFF, #E2E8F0); -fx-background-radius: 12; -fx-border-color: #E0E0E0; -fx-border-radius: 12; -fx-border-width: 1;">
                                  <font>
                                     <Font name="Calibri" size="14.0" />
@@ -106,20 +102,14 @@
                                     <Cursor fx:constant="TEXT" />
                                  </cursor>
                               </TextField>
-                              
-                              <!-- Order Status Filter -->
                               <ComboBox fx:id="statusFilterComboBox" layoutX="240.0" layoutY="35.0" prefHeight="35.0" prefWidth="150.0" promptText="All Status" style="-fx-background-color: linear-gradient(to bottom, #FFFFFF, #E2E8F0); -fx-background-radius: 12;">
                                  <cursor>
                                     <Cursor fx:constant="HAND" />
                                  </cursor></ComboBox>
-                              
-                              <!-- Payment Method Filter -->
                               <ComboBox fx:id="paymentFilterComboBox" layoutX="410.0" layoutY="35.0" prefHeight="35.0" prefWidth="150.0" promptText="All Payments" style="-fx-background-color: linear-gradient(to bottom, #FFFFFF, #E2E8F0); -fx-background-radius: 12;">
                                  <cursor>
                                     <Cursor fx:constant="HAND" />
                                  </cursor></ComboBox>
-                              
-                              <!-- Date Range Filters -->
                               <Label layoutX="580.0" layoutY="12.0" style="-fx-text-fill: #2C2C2C;" text="From:">
                                  <font>
                                     <Font name="Calibri Bold" size="12.0" />
@@ -139,9 +129,7 @@
                                  <cursor>
                                     <Cursor fx:constant="TEXT" />
                                  </cursor></DatePicker>
-                              
-                              <!-- Action Buttons -->
-                              <Button fx:id="refreshButton" layoutX="900.0" layoutY="35.0" mnemonicParsing="false" onAction="#handleRefresh" prefHeight="35.0" prefWidth="100.0" style="-fx-background-color: linear-gradient(to bottom, #FFB75E, #ED8F03); -fx-background-radius: 12; -fx-effect: dropshadow(gaussian, rgba(112,130,56,0.4), 8, 0, 0, 2); -fx-cursor: hand;" text="Refresh" textFill="WHITE">
+                              <Button fx:id="refreshButton" layoutX="1023.0" layoutY="35.0" mnemonicParsing="false" onAction="#handleRefresh" prefHeight="35.0" prefWidth="100.0" style="-fx-background-color: linear-gradient(to bottom, #FFB75E, #ED8F03); -fx-background-radius: 12; -fx-effect: dropshadow(gaussian, rgba(112,130,56,0.4), 8, 0, 0, 2); -fx-cursor: hand;" text="Refresh" textFill="WHITE">
                                  <font>
                                     <Font name="Calibri Bold" size="14.0" />
                                  </font>
@@ -149,17 +137,15 @@
                                     <FontIcon iconColor="WHITE" iconLiteral="bi-arrow-clockwise" iconSize="14" />
                                  </graphic>
                               </Button>
-                              
-                              <Button fx:id="clearFiltersButton" layoutX="1020.0" layoutY="35.0" mnemonicParsing="false" onAction="#handleClearFilters" prefHeight="35.0" prefWidth="100.0" style="-fx-background-color: linear-gradient(to bottom, #EF4444 0%, #DC2626 50%, #991B1B 100%); -fx-background-radius: 12; -fx-effect: dropshadow(gaussian, rgba(158,158,158,0.4), 8, 0, 0, 2); -fx-cursor: hand;" text="Reset" textFill="WHITE">
+                              <Button fx:id="clearFiltersButton" layoutX="899.0" layoutY="35.0" mnemonicParsing="false" onAction="#handleClearFilters" prefHeight="35.0" prefWidth="100.0" style="-fx-background-color: linear-gradient(to bottom, #BDBDBD, #9E9E9E); -fx-background-radius: 12; -fx-effect: dropshadow(gaussian, rgba(158,158,158,0.4), 8, 0, 0, 2); -fx-cursor: hand;" text="Clear" textFill="WHITE">
                                  <font>
                                     <Font name="Calibri Bold" size="14.0" />
                                  </font>
                                  <graphic>
-                                    <FontIcon iconColor="WHITE" iconLiteral="bi-x-circle" iconSize="14" />
+                                    <FontIcon iconColor="WHITE" iconLiteral="bi-eraser" iconSize="14" />
                                  </graphic>
                               </Button>
-                              
-                              <Button fx:id="exportButton" layoutX="1140.0" layoutY="35.0" mnemonicParsing="false" onAction="#handleExport" prefHeight="35.0" prefWidth="100.0" style="-fx-background-color: linear-gradient(to bottom, #3B82F6 0%, #2563EB 50%, #1E40AF 100%); -fx-background-radius: 12; -fx-effect: dropshadow(gaussian, rgba(112,130,56,0.4), 8, 0, 0, 2); -fx-cursor: hand;" text="Export" textFill="WHITE">
+                              <Button fx:id="exportButton" layoutX="1146.0" layoutY="35.0" mnemonicParsing="false" onAction="#handleExport" prefHeight="35.0" prefWidth="100.0" style="-fx-background-color: linear-gradient(to bottom, #3B82F6 0%, #2563EB 50%, #1E40AF 100%); -fx-background-radius: 12; -fx-effect: dropshadow(gaussian, rgba(112,130,56,0.4), 8, 0, 0, 2); -fx-cursor: hand;" text="Export" textFill="WHITE">
                                  <font>
                                     <Font name="Calibri Bold" size="14.0" />
                                  </font>
@@ -170,8 +156,6 @@
                               <FontIcon iconLiteral="bi-search" iconSize="15" layoutX="190.0" layoutY="60.0" text="" />
                            </children>
                         </AnchorPane>
-
-                        <!-- Orders Table Section -->
                         <AnchorPane layoutX="15.0" layoutY="114.0" prefHeight="620.0" prefWidth="1270.0" style="-fx-background-color: #F5EDE0; -fx-background-radius: 20; -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.2), 20, 0, 0, 5);" styleClass="card">
                            <children>
                               <Label layoutX="20.0" layoutY="15.0" style="-fx-font-weight: bold; -fx-text-fill: #2C2C2C;" text="Order History">
@@ -182,26 +166,22 @@
                                     <FontIcon iconLiteral="bi-clock-history" iconSize="24" />
                                  </graphic>
                               </Label>
-                              
-                              <!-- Orders Table -->
                               <TableView fx:id="ordersTable" layoutX="20.0" layoutY="50.0" prefHeight="500.0" prefWidth="1230.0" style="-fx-background-color: linear-gradient(to bottom, #FFFFFF, #F8F8F8); -fx-background-radius: 12; -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.1), 10, 0, 0, 2);">
                                  <columns>
                                     <TableColumn fx:id="orderIdColumn" prefWidth="80.0" text="Order ID" />
-                                    <TableColumn fx:id="customerNameColumn" prefWidth="180.0" text="Customer" />
-                                    <TableColumn fx:id="orderDateColumn" prefWidth="150.0" text="Date &amp; Time" />
+                                    <TableColumn fx:id="totalAmountColumn" prefWidth="120.0" text="Total Amount" />
+                                    <TableColumn fx:id="itemsColumn" prefWidth="250.0" text="Items" />
+                                    <TableColumn fx:id="statusColumn" prefWidth="100.0" text="Status" />
                                     <TableColumn fx:id="orderTypeColumn" prefWidth="100.0" text="Type" />
                                     <TableColumn fx:id="paymentMethodColumn" prefWidth="120.0" text="Payment" />
-                                    <TableColumn fx:id="totalAmountColumn" prefWidth="120.0" text="Total Amount" />
-                                    <TableColumn fx:id="statusColumn" prefWidth="100.0" text="Status" />
-                                    <TableColumn fx:id="itemsColumn" prefWidth="250.0" text="Items" />
-                                    <TableColumn fx:id="actionsColumn" prefWidth="220.0" text="Actions" />
+                                    <TableColumn fx:id="customerNameColumn" prefWidth="180.0" text="Customer" />
+                                    <TableColumn fx:id="orderDateColumn" prefWidth="150.0" text="Date &amp; Time" />
+                                    <TableColumn fx:id="actionsColumn" prefWidth="130.0" text="Actions" />
                                  </columns>
                                  <cursor>
                                     <Cursor fx:constant="HAND" />
                                  </cursor>
                               </TableView>
-                              
-                              <!-- Summary Statistics -->
                               <AnchorPane layoutX="20.0" layoutY="565.0" prefHeight="45.0" prefWidth="1230.0" style="-fx-background-color: linear-gradient(to bottom, #E8F5E8, #D4EDD4); -fx-background-radius: 12; -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.1), 8, 0, 0, 2);">
                                  <children>
                                     
