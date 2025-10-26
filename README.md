@@ -1,17 +1,18 @@
 Currently in Progress Project 
 
-# Sebucha Order Management System
+# 🌿 Sebucha Order Management System
 
-Sebucha Order Management System is a JavaFX-based desktop application designed to streamline the process of managing orders for small businesses. This project serves as a mini thesis and demonstrates the use of JavaFX and SceneBuilder for building modern, user-friendly GUIs.
+The Sebucha Order Management System is a JavaFX-based desktop application built to help small businesses manage their orders efficiently and effortlessly.
+Developed as part of a mini thesis project, this system showcases how JavaFX and SceneBuilder can be used to design clean, responsive, and modern graphical user interfaces for desktop environments.
 
-## Features
+## 🚀 Key Features
 
-- **Order Management:** Add, edit, view, and delete orders easily.
-- **Customer Management:** Track customer details and order history.
-- **Inventory Tracking:** Monitor product stock and availability.
-- **Reporting:** Generate sales and inventory reports for business insights.
-- **User Authentication:** Secure login system for staff and administrators.
-- **Responsive UI:** Built using JavaFX and SceneBuilder for a smooth user experience.
+- **🛒 Order Management:** Easily add, edit, view, and delete customer orders.
+- **👥 Customer Management:** Track customer details and order history.
+- **📦 Inventory Tracking:** Monitor product stock and availability.
+- **📊 Reporting Tools:** Generate sales and inventory reports for business insights.
+- **🔐 User Authentication:** Secure login system for staff and administrators.
+- **💻 Modern UI/UX:** Built using JavaFX and SceneBuilder for a smooth user experience.
 
 ## Technologies Used
 
@@ -31,26 +32,16 @@ Sebucha Order Management System is a JavaFX-based desktop application designed t
 
 ### Installation
 
-1. **Clone the Repository**
-   ```bash
-   git clone https://github.com/Danzskrtt/Sebucha-Order-Management-System.git
-   ```
-
-2. **Open the Project**
+**Open the Project**
    - Import into your IDE (IntelliJ IDEA, Eclipse, NetBeans, etc.)
    - Open FXML files with SceneBuilder for UI modifications.
 
-3. **Build and Run**
+**Build and Run**
    - Using Maven:
      ```bash
      mvn javafx:run
      ```
    - Or run the main class from your IDE.
-
-### Database Setup
-
-- Update the database configuration in `src/main/resources/config.properties`.
-- Run the provided SQL scripts in your database to create necessary tables.
 
 ## Usage
 
