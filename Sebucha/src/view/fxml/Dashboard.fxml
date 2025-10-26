@@ -1,6 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<?import javafx.scene.Cursor?>
 <?import javafx.scene.chart.BarChart?>
 <?import javafx.scene.chart.CategoryAxis?>
 <?import javafx.scene.chart.LineChart?>
@@ -46,7 +45,7 @@
                                     <Font name="Calibri Bold" size="16.0" />
                                  </font>
                                  <graphic>
-                                    <FontIcon iconLiteral="bi-cart-dash" iconSize="20" />
+                                    <FontIcon iconLiteral="bi-cart3" iconSize="20" />
                                  </graphic>
                               </Button>
                               <Button fx:id="logoutbutton" layoutX="14.0" layoutY="700.0" mnemonicParsing="false" onAction="#handleLogoutButton" prefHeight="35.0" prefWidth="95.0" style="-fx-background-color: linear-gradient(to bottom, #EF4444 0%, #DC2626 50%, #991B1B 100%); -fx-background-radius: 12; -fx-effect: dropshadow(gaussian, rgba(183,28,28,0.5), 10, 0, 0, 3); -fx-cursor: hand; -fx-border-color: rgba(255,255,255,0.2); -fx-border-width: 1; -fx-border-radius: 12;" text="Logout" textAlignment="CENTER" textFill="WHITE">
@@ -85,12 +84,12 @@
                      <children>
                         <AnchorPane layoutX="14.0" layoutY="22.0" prefHeight="148.0" prefWidth="1270.0" style="-fx-background-color: #F5EDE0; -fx-background-radius: 20; -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.2), 20, 0, 0, 5);" styleClass="card">
                            <children>
-                              <Label fx:id="today_income" layoutX="44.0" layoutY="18.0" prefHeight="50.0" prefWidth="265.0" style="-fx-font-weight: bold;" text="₱ 0.00" textFill="#22C55E">
+                              <Label fx:id="today_income" layoutX="46.0" layoutY="79.0" prefHeight="50.0" prefWidth="265.0" style="-fx-font-weight: bold;" text="₱ 0.00" textFill="#22C55E">
                                  <font>
                                     <Font name="Calibri Bold" size="35.0" />
                                  </font>
                               </Label>
-                              <Label layoutX="44.0" layoutY="74.0" prefHeight="60.0" prefWidth="300.0" style="-fx-font-weight: bold;" text="Today's Income" textFill="#2C2C2C">
+                              <Label layoutX="46.0" layoutY="13.0" prefHeight="60.0" prefWidth="300.0" style="-fx-font-weight: bold;" text="Today's Income" textFill="#2C2C2C">
                                  <font>
                                     <Font name="Calibri Bold" size="35.0" />
                                  </font>
@@ -98,25 +97,25 @@
                                     <FontIcon iconLiteral="bi-cash" iconSize="60" />
                                  </graphic>
                               </Label>
-                              <Label fx:id="products_sold" layoutX="499.0" layoutY="19.0" prefHeight="42.0" prefWidth="265.0" style="-fx-font-weight: bold;" text="0" textFill="#3B82F6">
+                              <Label fx:id="products_sold" layoutX="618.0" layoutY="82.0" prefHeight="42.0" prefWidth="100.0" style="-fx-font-weight: bold;" text="0" textFill="#3B82F6">
                                  <font>
                                     <Font name="Calibri Bold" size="35.0" />
                                  </font>
                               </Label>
-                              <Label layoutX="502.0" layoutY="74.0" prefHeight="60.0" prefWidth="265.0" style="-fx-font-weight: bold;" text="Products Sold" textFill="#2C2C2C">
+                              <Label layoutX="502.0" layoutY="15.0" prefHeight="60.0" prefWidth="265.0" style="-fx-font-weight: bold;" text="Products Sold" textFill="#2C2C2C">
                                  <font>
                                     <Font name="Calibri Bold" size="35.0" />
                                  </font>
                                  <graphic>
-                                    <FontIcon iconLiteral="bi-cart" iconSize="60" />
+                                    <FontIcon iconLiteral="bi-cart4" iconSize="60" />
                                  </graphic>
                               </Label>
-                              <Label fx:id="total_income" layoutX="948.0" layoutY="15.0" prefHeight="55.0" prefWidth="265.0" style="-fx-font-weight: bold;" text="₱ 0.00" textFill="#860cf5">
+                              <Label fx:id="total_income" layoutX="937.0" layoutY="76.0" prefHeight="55.0" prefWidth="265.0" style="-fx-font-weight: bold;" text="₱ 0.00" textFill="#860cf5">
                                  <font>
                                     <Font name="Calibri Bold" size="35.0" />
                                  </font>
                               </Label>
-                              <Label layoutX="948.0" layoutY="74.0" prefHeight="60.0" prefWidth="280.0" style="-fx-font-weight: bold;" text="Total Revenue" textFill="#2C2C2C">
+                              <Label layoutX="937.0" layoutY="15.0" prefHeight="60.0" prefWidth="280.0" style="-fx-font-weight: bold;" text="Total Revenue" textFill="#2C2C2C">
                                  <font>
                                     <Font name="Calibri Bold" size="35.0" />
                                  </font>
@@ -124,19 +123,16 @@
                                     <FontIcon iconLiteral="bi-cash-stack" iconSize="60" />
                                  </graphic>
                               </Label>
-                              <Button fx:id="resetbutton" layoutX="1224.0" layoutY="13.0" mnemonicParsing="false" onAction="#handleResetButton" prefHeight="30.0" prefWidth="30.0" style="-fx-background-color: linear-gradient(to bottom, #EF4444 0%, #DC2626 50%, #991B1B 100%); -fx-background-radius: 12; -fx-effect: dropshadow(gaussian, rgba(158,158,158,0.4), 8, 0, 0, 2); -fx-cursor: hand;" styleClass="button secondary">
+                              <Button fx:id="ResetButton" layoutX="1233.0" layoutY="6.0" mnemonicParsing="false" onAction="#handleResetButton" prefHeight="25.0" prefWidth="25.0" style="-fx-background-color: linear-gradient(to bottom, #EF4444 0%, #DC2626 50%, #991B1B 100%); -fx-background-radius: 12; -fx-effect: dropshadow(gaussian, rgba(158,158,158,0.4), 8, 0, 0, 2); -fx-cursor: hand;" styleClass="button secondary">
                                  <graphic>
-                                    <FontIcon iconColor="WHITE" iconLiteral="bi-arrow-clockwise" iconSize="15" text="">
-                                       <cursor>
-                                          <Cursor fx:constant="HAND" />
-                                       </cursor></FontIcon>
+                                    <FontIcon iconColor="WHITE" iconLiteral="bi-arrow-clockwise" iconSize="12" />
                                  </graphic>
                               </Button>
                            </children>
                         </AnchorPane>
                         <AnchorPane layoutX="15.0" layoutY="190.0" prefHeight="545.0" prefWidth="1270.0" style="-fx-background-color: #F5EDE0; -fx-background-radius: 20; -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.2), 20, 0, 0, 5);" styleClass="card">
                            <children>
-                              <LineChart fx:id="incomechart" layoutX="14.0" layoutY="15.0" prefHeight="515.0" prefWidth="615.0" title="Income Chart">
+                              <LineChart fx:id="incomechart" layoutX="14.0" layoutY="8.0" prefHeight="515.0" prefWidth="615.0" title="Income Chart">
                                 <xAxis>
                                   <CategoryAxis side="BOTTOM" />
                                 </xAxis>
