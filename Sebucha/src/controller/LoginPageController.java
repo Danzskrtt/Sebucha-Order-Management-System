@@ -1,23 +1,29 @@
 package controller;
 
-import javafx.fxml.FXML;
+import javafx.application.Platform;
 
+import javafx.event.ActionEvent;
+import javafx.fxml.FXML;
+import javafx.fxml.FXMLLoader;
+import javafx.fxml.Initializable;
+import javafx.scene.Node;
+import javafx.scene.Parent;
+import javafx.scene.Scene;
 import javafx.scene.control.Label;
+import javafx.scene.control.TextField;
+import javafx.scene.paint.Color;
+import javafx.stage.Stage;
+import model.LoginModel;
+
+import java.io.IOException;
 import java.net.URL;
 import java.sql.SQLException;
 import java.util.ResourceBundle;
-import model.LoginModel; 
-import javafx.fxml.Initializable;
-import javafx.scene.control.TextField;
-import javafx.event.ActionEvent;
-import javafx.scene.paint.Color;
-import javafx.fxml.FXMLLoader;
-import javafx.scene.Parent;
-import javafx.scene.Scene;
-import javafx.stage.Stage;
-import javafx.scene.Node;
-import java.io.IOException;
 
+/*
+ * Handles the Login page: validates input, checks credentials via LoginModel,
+ * and navigates to the Dashboard on success.
+ */
 public class LoginPageController implements Initializable {
     public LoginModel loginmodel = new LoginModel();
     
@@ -30,6 +36,7 @@ public class LoginPageController implements Initializable {
     @FXML
     private TextField PasswordField;
     
+ 
     @Override
     
     public void initialize(URL location, ResourceBundle resources) {
@@ -39,8 +46,22 @@ public class LoginPageController implements Initializable {
     	}else {
     		isConnected.setText("Database is not Connected");
     	}
+    	
+    	// Center the login window after UI loads
+        Platform.runLater(() -> {
+            // Get the stage from any FXML component
+            Stage stage = (Stage) UsernameField.getScene().getWindow();
+            if (stage != null) {
+                stage.centerOnScreen();
+                stage.setResizable(false); // Keep login window non-resizable for consistency
+            }
+        });
     }
     
+    /*
+     * Quick input validation for username and password fields.
+     * - Highlights invalid fields and shows a compact error message label.
+     */
     private boolean validateInput(String username, String password) {
        
         UsernameField.setStyle("");
@@ -80,6 +101,12 @@ public class LoginPageController implements Initializable {
         return isValid;
     }
    
+    
+     //Attempts login using the provided credentials.
+     //Validates inputs
+     //Calls LoginModel.isLogin
+     //Navigates to Dashboard on success, otherwise shows an error and highlights fields.
+     
     public void Login (ActionEvent event) {
         String username = UsernameField.getText();
         String password = PasswordField.getText();
