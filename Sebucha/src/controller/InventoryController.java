@@ -1,7 +1,6 @@
 package controller;
 
 import javafx.application.Platform;
-
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
@@ -18,6 +17,8 @@ import javafx.stage.FileChooser;
 import javafx.stage.Stage;
 import model.Product;
 import model.SqliteConnection;
+import model.InventoryIdGenerator;
+
 import java.io.File;
 import java.io.IOException;
 import java.net.URL;
@@ -28,6 +29,11 @@ import java.time.format.DateTimeFormatter;
 import java.util.Optional;
 import java.util.ResourceBundle;
 
+//InventoryController
+
+//Controls the Inventory screen: loads products, formats the table, and
+//handles add/update/delete actions, image selection, and page navigation.
+ 
 public class InventoryController implements Initializable {
     
     // Navigation buttons
@@ -48,8 +54,6 @@ public class InventoryController implements Initializable {
     
     // Action buttons
     @FXML private Button addButton;
-    @FXML private Button updateButton;
-    @FXML private Button deleteButton;
     @FXML private Button clearButton;
     @FXML private Button selectImageButton;
     @FXML private Button removeImageButton;
@@ -67,6 +71,7 @@ public class InventoryController implements Initializable {
     @FXML private TableColumn<Product, Integer> stockColumn;
     @FXML private TableColumn<Product, String> statusColumn;
     @FXML private TableColumn<Product, String> dateColumn;
+    @FXML private TableColumn<Product, String> actionsColumn;
     
     // Database connection
     private Connection connection;
@@ -77,6 +82,9 @@ public class InventoryController implements Initializable {
     private String selectedImagePath = "";
     private Product selectedProduct = null;
     
+    /*
+     * Connects to DB, prepares combo boxes/table, loads products, and sets window behavior.
+     */
     @Override
     public void initialize(URL url, ResourceBundle resourceBundle) {
         // Initialize database connection
@@ -94,7 +102,7 @@ public class InventoryController implements Initializable {
         // Setup window
         Platform.runLater(() -> {
             Stage stage = (Stage) inventorybutton.getScene().getWindow();
-            stage.setResizable(true);
+            stage.setResizable(false);
             stage.centerOnScreen();
         });
         
@@ -105,6 +113,7 @@ public class InventoryController implements Initializable {
     }
     
     // Navigation methods
+    /* Loads the Dashboard page. */
     @FXML
     private void handleDashboardButton(ActionEvent event) {
         try {
@@ -114,12 +123,14 @@ public class InventoryController implements Initializable {
         }
     }
     
+    /* Refreshes the current Inventory list without changing page. */
     @FXML
     private void handleInventoryButton(ActionEvent event) {
         // Already on inventory page
         refreshProducts();
     }
     
+    /* Navigates to the Order page. */
     @FXML
     private void handleOrderButton(ActionEvent event) {
         try {
@@ -128,7 +139,8 @@ public class InventoryController implements Initializable {
             showAlert("Error", "Could not load Order page: " + e.getMessage(), Alert.AlertType.ERROR);
         }
     }
-    
+   
+    /* Navigates to the Recent Orders page. */
     @FXML
     private void handleRecentOrderButton(ActionEvent event) {
         try {
@@ -138,6 +150,7 @@ public class InventoryController implements Initializable {
         }
     }
     
+    /* Confirms and logs out to the Login page. */
     @FXML
     private void handleLogoutButton(ActionEvent event) {
         Alert alert = new Alert(Alert.AlertType.CONFIRMATION);
@@ -155,6 +168,7 @@ public class InventoryController implements Initializable {
         }
     }
     
+    /* Reloads products from DB and shows a short success notice. */
     @FXML
     private void handleRefreshButton(ActionEvent event) {
         refreshProducts();
@@ -162,23 +176,32 @@ public class InventoryController implements Initializable {
     }
     
     // CRUD Operations
+    /*
+     * Validates inputs and inserts a new product.
+     * Generates category-based numeric ID and stores timestamp/image path.
+     */
     @FXML
     private void handleAddProduct(ActionEvent event) {
         if (validateForm()) {
-            String sql = "INSERT INTO products (name, category, price, stock, status, image_path, date_added) VALUES (?, ?, ?, ?, ?, ?, ?)";
+            String sql = "INSERT INTO products (id, name, category, price, stock, status, image_path, date_added) VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
             
             PreparedStatement prepare = null;
             try {
                 prepare = connection.prepareStatement(sql);
-                prepare.setString(1, productNameField.getText().trim());
-                prepare.setString(2, categoryComboBox.getValue());
-                prepare.setDouble(3, Double.parseDouble(priceField.getText().trim()));
-                prepare.setInt(4, Integer.parseInt(stockField.getText().trim()));
-                prepare.setString(5, statusComboBox.getValue());
-                prepare.setString(6, selectedImagePath != null ? selectedImagePath : "");
+                
+                // Generate a numeric ID for the database (the table display will format it with category code)
+                int numericId = InventoryIdGenerator.generateIdForCategory(connection, categoryComboBox.getValue());
+                
+                prepare.setInt(1, numericId);
+                prepare.setString(2, productNameField.getText().trim());
+                prepare.setString(3, categoryComboBox.getValue());
+                prepare.setDouble(4, Double.parseDouble(priceField.getText().trim()));
+                prepare.setInt(5, Integer.parseInt(stockField.getText().trim()));
+                prepare.setString(6, statusComboBox.getValue());
+                prepare.setString(7, selectedImagePath != null ? selectedImagePath : "");
                 
                 long currentTimestamp = System.currentTimeMillis() / 1000;
-                prepare.setLong(7, currentTimestamp);
+                prepare.setLong(8, currentTimestamp);
                 
                 int result = prepare.executeUpdate();
                 if (result > 0) {
@@ -214,6 +237,7 @@ public class InventoryController implements Initializable {
         }
     }
     
+    /* Updates the selected product after validation. */
     @FXML
     private void handleUpdateProduct(ActionEvent event) {
         if (selectedProduct == null) {
@@ -261,6 +285,7 @@ public class InventoryController implements Initializable {
         }
     }
     
+    /* Confirms and deletes the selected product. */
     @FXML
     private void handleDeleteProduct(ActionEvent event) {
         if (selectedProduct == null) {
@@ -306,12 +331,14 @@ public class InventoryController implements Initializable {
         }
     }
     
+    /* Clears all form fields and current selection. */
     @FXML
     private void handleClearForm(ActionEvent event) {
         clearForm();
     }
     
     // Image handling
+    /* Lets the user pick an image file and previews it. */
     @FXML
     private void handleSelectImage(ActionEvent event) {
         FileChooser fileChooser = new FileChooser();
@@ -335,6 +362,7 @@ public class InventoryController implements Initializable {
         }
     }
     
+    /* Removes custom image and restores the default placeholder. */
     @FXML
     private void handleRemoveImage(ActionEvent event) {
         selectedImagePath = "";
@@ -342,6 +370,10 @@ public class InventoryController implements Initializable {
     }
     
     // Setup methods
+    /*
+     * Fills category/status options and auto-generates a readable product ID
+     * whenever category changes.
+     */
     private void setupComboBoxes() {
         // Category options
         categoryComboBox.getItems().addAll(
@@ -349,15 +381,27 @@ public class InventoryController implements Initializable {
             ,"Add-ons"
         );
         
+        // Add listener to category selection to auto-generate product ID
+        categoryComboBox.setOnAction(event -> {
+            String selectedCategory = categoryComboBox.getValue();
+            if (selectedCategory != null && !selectedCategory.isEmpty()) {
+                // Generate category-based ID and display it in the productIdField
+                String generatedId = InventoryIdGenerator.generateCategoryIdString(connection, selectedCategory);
+                productIdField.setText(generatedId);
+                System.out.println("Generated ID for " + selectedCategory + ": " + generatedId);
+            }
+        });
+        
         // Status options
         statusComboBox.getItems().addAll(
             "Available", "Out of Stock", "Discontinued", "Low Stock"
         );
     }
     
+    
     private void setupTable() {
         System.out.println("Setting up table columns...");
-        
+            
         // Setup table columns with explicit cell value factories
         idColumn.setCellValueFactory(cellData -> new javafx.beans.property.SimpleIntegerProperty(cellData.getValue().getId()).asObject());
         nameColumn.setCellValueFactory(cellData -> new javafx.beans.property.SimpleStringProperty(cellData.getValue().getName()));
@@ -371,6 +415,127 @@ public class InventoryController implements Initializable {
             return new javafx.beans.property.SimpleStringProperty(dateString);
         });
         
+        // Apply white background styling to all columns except status
+        String whiteColumnStyle = "-fx-alignment: center;";
+        
+        // Format ID column to show category-based format (e.g., "CLA-001")
+        idColumn.setCellFactory(column -> new TableCell<Product, Integer>() {
+            @Override
+            protected void updateItem(Integer id, boolean empty) {
+                super.updateItem(id, empty);
+                if (empty || id == null) {
+                    setText(null);
+                    setStyle("");
+                } else {
+                    // Get the product from the table row to access category
+                    Product product = getTableView().getItems().get(getIndex());
+                    if (product != null) {
+                        String categoryCode = InventoryIdGenerator.getCategoryCode(product.getCategory());
+                        setText(String.format("%s-%03d", categoryCode, id));
+                    } else {
+                        setText(String.valueOf(id));
+                    }
+                    setStyle(whiteColumnStyle);
+                }
+            }
+        });
+        
+        // Format name column
+        nameColumn.setCellFactory(column -> new TableCell<Product, String>() {
+            @Override
+            protected void updateItem(String name, boolean empty) {
+                super.updateItem(name, empty);
+                if (empty || name == null) {
+                    setText(null);
+                    setStyle("");
+                } else {
+                    setText(name);
+                    setStyle(whiteColumnStyle);
+                }
+            }
+        });
+        
+        // Format category column with unique color coding for each category
+        categoryColumn.setCellFactory(column -> new TableCell<Product, String>() {
+            @Override
+            protected void updateItem(String category, boolean empty) {
+                super.updateItem(category, empty);
+                if (empty || category == null) {
+                    setText(null);
+                    setStyle("");
+                } else {
+                    setText(category);
+                    
+                    // Apply unique color coding for each category
+                    String style = "-fx-text-fill: white; -fx-font-weight: bold; -fx-padding: 5; -fx-alignment: center; ";
+                    
+                    switch (category.toLowerCase()) {
+                        case "premium series":
+                            style += "-fx-background-color: #D4AF37;"; // Rich Gold
+                            break;
+                        case "classic series":
+                            style += "-fx-background-color: #6F4E37;"; // Deep Brown
+                            break;
+                        case "latte series":
+                            style += "-fx-background-color: #F5DEB3; -fx-text-fill: #333333;"; // Cream Beige with dark text
+                            break;
+                        case "frappe series":
+                            style += "-fx-background-color: #4DB6AC;"; // Cool Teal
+                            break;
+                        case "healthy fruit tea":
+                            style += "-fx-background-color: #FFB74D; -fx-text-fill: #333333;"; // Bright Orange with dark text
+                            break;
+                        case "hot drinks":
+                            style += "-fx-background-color: #E57373;"; // Warm Red
+                            break;
+                        case "food pair":
+                            style += "-fx-background-color: #8BC34A;"; // Olive Green
+                            break;
+                        case "add-ons":
+                            style += "-fx-background-color: #CFD8DC; -fx-text-fill: #333333;"; // Light Gray with dark text
+                            break;
+                        default:
+                            style += "-fx-background-color: #9E9E9E;"; // Default gray for unknown categories
+                            break;
+                    }
+                    
+                    setStyle(style);
+                    setAlignment(javafx.geometry.Pos.CENTER);
+                }
+            }
+        });
+        
+        // Format stock column
+        stockColumn.setCellFactory(column -> new TableCell<Product, Integer>() {
+            @Override
+            protected void updateItem(Integer stock, boolean empty) {
+                super.updateItem(stock, empty);
+                if (empty || stock == null) {
+                    setText(null);
+                    setStyle("");
+                } else {
+                    setText(String.valueOf(stock));
+                    // Apply bold text styling
+                    setStyle("-fx-alignment: center; -fx-font-weight: bold;");
+                }
+            }
+        });
+        
+        // Format date column
+        dateColumn.setCellFactory(column -> new TableCell<Product, String>() {
+            @Override
+            protected void updateItem(String date, boolean empty) {
+                super.updateItem(date, empty);
+                if (empty || date == null) {
+                    setText(null);
+                    setStyle("");
+                } else {
+                    setText(date);
+                    setStyle(whiteColumnStyle);
+                }
+            }
+        });
+        
         // Format price column
         priceColumn.setCellFactory(column -> new TableCell<Product, Double>() {
             @Override
@@ -378,13 +543,16 @@ public class InventoryController implements Initializable {
                 super.updateItem(price, empty);
                 if (empty || price == null) {
                     setText(null);
+                    setStyle("");
                 } else {
                     setText("₱ " + decimalFormat.format(price));
+                    // Apply bold green text styling
+                    setStyle("-fx-alignment: center; -fx-font-weight: bold; -fx-text-fill: #22C55E;");
                 }
             }
         });
         
-        // Format status column with color coding
+        // Keep the existing status column with color coding (unchanged)
         statusColumn.setCellFactory(column -> new TableCell<Product, String>() {
             @Override
             protected void updateItem(String status, boolean empty) {
@@ -396,7 +564,7 @@ public class InventoryController implements Initializable {
                     setText(status);
                     
                     // Apply color coding based on status
-                    String style = "-fx-text-fill: white; -fx-font-weight: bold; -fx-padding: 5; -fx-border-radius: 5; -fx-background-radius: 5; ";
+                    String style = "-fx-text-fill: white; -fx-font-weight: bold; -fx-padding: 5; ";
                     
                     switch (status.toLowerCase()) {
                         case "available":
@@ -451,30 +619,121 @@ public class InventoryController implements Initializable {
                         imageView.setImage(new Image(getClass().getResourceAsStream("/view/images/addimage.png")));
                     }
                     setGraphic(imageView);
+                    // Center the image in the cell
+                    setAlignment(javafx.geometry.Pos.CENTER);
                 }
             }
         });
         
-        // Set the items to the table
-        productsTable.setItems(productsList);
-        System.out.println("Table items set. ProductsList size: " + productsList.size()); // Debug
-        
-        // Table selection listener
-        productsTable.getSelectionModel().selectedItemProperty().addListener((obs, oldSelection, newSelection) -> {
-            if (newSelection != null) {
-                selectedProduct = newSelection;
-                selectProductForEdit(newSelection);
-                System.out.println("Selected product: " + newSelection.getName()); // Debug
+        // Format actions column with Update and Delete buttons
+        actionsColumn.setCellFactory(column -> new TableCell<Product, String>() {
+            private final Button updateButton = new Button();
+            private final Button deleteButton = new Button();
+            private final javafx.scene.layout.HBox buttonBox = new javafx.scene.layout.HBox(6);
+            
+            {
+                buttonBox.setAlignment(javafx.geometry.Pos.CENTER);
+                buttonBox.setPadding(new javafx.geometry.Insets(4, 4, 4, 4));
+                
+                updateButton.setStyle(
+                    "-fx-background-color: linear-gradient(to bottom, #2196F3 0%, #1E88E5 50%, #1976D2 100%);" +
+                    "-fx-background-radius: 8;" +
+                    "-fx-text-fill: white;" +
+                    "-fx-font-family: 'Calibri';" +
+                    "-fx-font-size: 10px;" +
+                    "-fx-font-weight: bold;" +
+                    "-fx-cursor: hand;" +
+                    "-fx-padding: 4 8;" +
+                    "-fx-pref-width: 60px;" +
+                    "-fx-pref-height: 28px;"
+                );
+                updateButton.setText("Update");
+                updateButton.setTooltip(new Tooltip("Update Product"));
+                
+                deleteButton.setStyle(
+                    "-fx-background-color: linear-gradient(to bottom, #EF4444 0%, #DC2626 50%, #991B1B 100%);" +
+                    "-fx-background-radius: 8;" +
+                    "-fx-text-fill: white;" +
+                    "-fx-font-family: 'Calibri';" +
+                    "-fx-font-size: 10px;" +
+                    "-fx-font-weight: bold;" +
+                    "-fx-cursor: hand;" +
+                    "-fx-padding: 4 8;" +
+                    "-fx-pref-width: 60px;" +
+                    "-fx-pref-height: 28px;"
+                );
+                deleteButton.setText("Delete");
+                deleteButton.setTooltip(new Tooltip("Delete Product"));
+                
+                // Set button actions
+                updateButton.setOnAction(event -> {
+                    if (getTableRow() != null && getTableRow().getItem() != null) {
+                        Product product = getTableRow().getItem();
+                        openUpdatePopup(product);
+                    }
+                });
+                
+                deleteButton.setOnAction(event -> {
+                    if (getTableRow() != null && getTableRow().getItem() != null) {
+                        Product product = getTableRow().getItem();
+                        selectedProduct = product;
+                        handleDeleteProduct(new ActionEvent(deleteButton, this));
+                    }
+                });
+                
+                buttonBox.getChildren().addAll(updateButton, deleteButton);
+            }
+            
+            @Override
+            protected void updateItem(String item, boolean empty) {
+                super.updateItem(item, empty);
+                if (empty || getTableRow() == null || getTableRow().getItem() == null) {
+                    setGraphic(null);
+                } else {
+                    setGraphic(buttonBox);
+                }
             }
         });
         
-        // Enable table selection
-        productsTable.getSelectionModel().setSelectionMode(SelectionMode.SINGLE);
-        productsTable.setFocusTraversable(true);
+        // Disable table row selection completely
+        productsTable.setRowFactory(tv -> {
+            TableRow<Product> row = new TableRow<Product>() {
+                @Override
+                public void updateItem(Product item, boolean empty) {
+                    super.updateItem(item, empty);
+                    // Remove any selection styling
+                    setStyle("-fx-background-color: transparent;");
+                }
+            };
+            
+            // Disable row selection on mouse click - only allow scrolling and button clicks
+            row.setOnMouseClicked(event -> {
+                // Clear any selection that might occur
+                productsTable.getSelectionModel().clearSelection();
+                event.consume(); // Prevent further event propagation
+            });
+            
+            // Allow scrolling by not consuming scroll events
+            row.setOnScroll(event -> {
+                // Let scroll events pass through to the table
+            });
+            
+            return row;
+        });
         
-        System.out.println("Table setup completed."); // Debug
+        // Disable table selection model
+        productsTable.getSelectionModel().setSelectionMode(SelectionMode.SINGLE);
+        productsTable.setFocusTraversable(false); // Disable focus traversal
+        
+        // Remove the old table selection listener since we're disabling row selection
+        // productsTable.getSelectionModel().selectedItemProperty().addListener(...);
+        
+        // Set the items to the table
+        productsTable.setItems(productsList);
+        System.out.println("Table setup completed with action buttons and disabled row selection.");
     }
     
+    /** Loads products from DB into the table's backing list and refreshes the view. */
     private void loadProducts() {
         productsList.clear();
         String sql = "SELECT * FROM products ORDER BY id DESC";
@@ -532,9 +791,14 @@ public class InventoryController implements Initializable {
         }
     }
     
+    /** Copies selected product to the form, formats its ID, and previews its image. */
     private void selectProductForEdit(Product product) {
         selectedProduct = product;
-        productIdField.setText(String.valueOf(product.getId()));
+        // Display the category-based ID format in the field
+        String categoryCode = InventoryIdGenerator.getCategoryCode(product.getCategory());
+        String formattedId = String.format("%s-%03d", categoryCode, product.getId());
+        productIdField.setText(formattedId);
+        
         productNameField.setText(product.getName());
         categoryComboBox.setValue(product.getCategory());
         priceField.setText(String.valueOf(product.getPrice()));
@@ -559,12 +823,18 @@ public class InventoryController implements Initializable {
         }
     }
     
+    /* Quick info dialog for a product (formatted ID, price, stock, date). */
     private void showProductDetails(Product product) {
         Alert alert = new Alert(Alert.AlertType.INFORMATION);
         alert.setTitle("Product Details");
         alert.setHeaderText(product.getName());
+        
+        // Format the ID with category code
+        String categoryCode = InventoryIdGenerator.getCategoryCode(product.getCategory());
+        String formattedId = String.format("%s-%03d", categoryCode, product.getId());
+        
         alert.setContentText(
-            "ID: " + product.getId() + "\n" +
+            "ID: " + formattedId + "\n" +
             "Category: " + product.getCategory() + "\n" +
             "Price: ₱ " + decimalFormat.format(product.getPrice()) + "\n" +
             "Stock: " + product.getStock() + "\n" +
@@ -574,6 +844,7 @@ public class InventoryController implements Initializable {
         alert.showAndWait();
     }
     
+    /* Validates required fields and numeric formats; shows targeted errors. */
     private boolean validateForm() {
         if (productNameField.getText().trim().isEmpty()) {
             showAlert("Validation Error", "Product name is required!", Alert.AlertType.ERROR);
@@ -617,23 +888,70 @@ public class InventoryController implements Initializable {
         return true;
     }
     
+    /* Resets the form and clears table selection. */
     private void clearForm() {
         selectedProduct = null;
         productIdField.clear();
         productNameField.clear();
-        categoryComboBox.setValue(null);
+        
+        // Clear category combobox selection and restore prompt text
+        categoryComboBox.getSelectionModel().clearSelection();
+        categoryComboBox.setPromptText("Select category");
+        
         priceField.clear();
         stockField.clear();
-        statusComboBox.setValue(null);
+        
+        // Clear status combobox selection and restore prompt text  
+        statusComboBox.getSelectionModel().clearSelection();
+        statusComboBox.setPromptText("Select status");
+        
         handleRemoveImage(null);
         productsTable.getSelectionModel().clearSelection();
     }
     
+    /* Convenience wrapper to reload products. */
     private void refreshProducts() {
         loadProducts();
     }
     
+    /* Opens the update popup window for the selected product */
+    private void openUpdatePopup(Product product) {
+        try {
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("/view/fxml/ProductUpdatePopup.fxml"));
+            Parent root = loader.load();
+            
+            // Get the controller and set the product data
+            ProductUpdatePopupController controller = loader.getController();
+            controller.setProduct(product);
+            controller.setParentController(this);
+            
+            // Create a new stage for the popup
+            Stage popupStage = new Stage();
+            popupStage.setTitle("Update Product");
+            popupStage.setScene(new Scene(root));
+            popupStage.setResizable(false);
+            popupStage.initOwner(inventorybutton.getScene().getWindow());
+            popupStage.initModality(javafx.stage.Modality.WINDOW_MODAL);
+            
+            // Center the popup
+            popupStage.centerOnScreen();
+            
+            // Show the popup
+            popupStage.showAndWait();
+            
+        } catch (IOException e) {
+            showAlert("Error", "Could not open update popup: " + e.getMessage(), Alert.AlertType.ERROR);
+            e.printStackTrace();
+        }
+    }
+    
+    /* Public method to refresh the table - called by popup controller */
+    public void refreshTable() {
+        loadProducts();
+    }
+    
     // Utility methods
+    /* Loads another FXML view into the current stage. */
     private void loadScene(ActionEvent event, String fxmlPath) throws IOException {
         Parent root = FXMLLoader.load(getClass().getResource(fxmlPath));
         Stage stage = (Stage) ((Node) event.getSource()).getScene().getWindow();
@@ -643,6 +961,7 @@ public class InventoryController implements Initializable {
         stage.show();
     }
     
+    /* Shows an alert with title/message/type. */
     private void showAlert(String title, String message, Alert.AlertType type) {
         Alert alert = new Alert(type);
         alert.setTitle(title);
