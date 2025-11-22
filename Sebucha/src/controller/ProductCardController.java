@@ -1,6 +1,7 @@
 package controller;
 
 import javafx.collections.FXCollections;
+
 import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
@@ -21,6 +22,9 @@ import java.util.ResourceBundle;
 import java.util.ArrayList;
 import java.util.List;
 
+ // Renders a single product card in the Order page: shows image, name, price,
+ //stock, and lets the user select quantity and add-ons to add to cart.
+ 
 public class ProductCardController implements Initializable {
 
     @FXML
@@ -51,17 +55,15 @@ public class ProductCardController implements Initializable {
     private OrderController orderController; // Reference to parent controller
     private static List<OrderItem> cartItems = new ArrayList<>();
     
+   
     @Override
     public void initialize(URL location, ResourceBundle resources) {
-        // Initialize the add-ons ComboBox with database values
         loadAddOnsFromDatabase();
         
-        // Initialize the quantity spinner
         SpinnerValueFactory<Integer> valueFactory = 
             new SpinnerValueFactory.IntegerSpinnerValueFactory(1, 99, 1);
         quantitySpinner.setValueFactory(valueFactory);
         
-        // Make spinner editable
         quantitySpinner.setEditable(true);
     }
 
@@ -78,9 +80,7 @@ public class ProductCardController implements Initializable {
             while (result.next()) {
                 String name = result.getString("name");
                 double price = result.getDouble("price");
-                // Format the price with two decimal places
                 String formattedPrice = String.format("%.2f", price);
-                // Add the add-on with its price
                 dbAddOns.add(name + " (+₱" + formattedPrice + ")");
             }
             
@@ -89,11 +89,9 @@ public class ProductCardController implements Initializable {
             System.err.println("Error loading add-ons: " + e.getMessage());
         }
         
-        // Set items to ComboBox even if database fetch fails
         addOnsComboBox.setItems(dbAddOns);
         addOnsComboBox.setValue("None");
         
-        // Add a listener to handle null selection
         addOnsComboBox.setOnAction(event -> {
             if (addOnsComboBox.getValue() == null) {
                 addOnsComboBox.setValue("None");
@@ -106,27 +104,22 @@ public class ProductCardController implements Initializable {
         updateProductDisplay();
     }
 
-    // New method to set the OrderController reference
     public void setOrderController(OrderController orderController) {
         this.orderController = orderController;
     }
 
+    // Syncs labels and image with the current product and styles the stock badge
     private void updateProductDisplay() {
         if (product != null) {
-            // Set product name
             productNameLabel.setText(product.getName());
             
-            // Set product price with currency formatting
             productPriceLabel.setText(String.format("₱%.2f", product.getPrice()));
             
-            // Set category
             productCategoryLabel.setText(product.getCategory());
             
-            // Set stock with color coding
             productStockLabel.setText("Stock: " + product.getStock());
             updateStockLabel();
             
-            // Load and set the product image
             try {
                 String imagePath = product.getImagePath();
                 Image image = null;
@@ -138,18 +131,36 @@ public class ProductCardController implements Initializable {
                     }
                 }
                 
-                // If product image couldn't be loaded, use addimage.png as default
                 if (image == null) {
                     image = new Image(getClass().getResource("/view/images/addimage.png").toExternalForm());
                 }
                 
                 productImageView.setImage(image);
                 
+                productImageView.setPreserveRatio(true);
+                productImageView.setSmooth(true);
+                productImageView.setCache(true);
+                
+                productImageView.setFitWidth(275.0);
+                productImageView.setFitHeight(275.0);
+                
+                productImageView.setStyle(
+                    "-fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.15), 15, 0, 0, 5);" +
+                    "-fx-background-color: transparent;"
+                );
+                
             } catch (Exception e) {
                 System.err.println("Error loading product image: " + e.getMessage());
-                // Use addimage.png as fallback
                 try {
-                    productImageView.setImage(new Image(getClass().getResource("/view/images/addimage.png").toExternalForm()));
+                    Image fallbackImage = new Image(getClass().getResource("/view/images/addimage.png").toExternalForm());
+                    productImageView.setImage(fallbackImage);
+                    
+                    productImageView.setPreserveRatio(true);
+                    productImageView.setSmooth(true);
+                    productImageView.setCache(true);
+                    productImageView.setFitWidth(275.0);
+                    productImageView.setFitHeight(275.0);
+                    
                 } catch (Exception ex) {
                     System.err.println("Failed to load fallback image: " + ex.getMessage());
                 }
@@ -195,6 +206,10 @@ public class ProductCardController implements Initializable {
         }
     }
 
+    
+     //Adds the selected product (with optional add-on) to the cart.
+     //Validates stock and quantity, calculates total, and resets inputs on success.
+     
     @FXML
     private void handleAddToCart() {
         if (product == null) {
@@ -223,17 +238,14 @@ public class ProductCardController implements Initializable {
         double unitPrice = product.getPrice() + addOnPrice;
         double totalPrice = unitPrice * quantity;
 
-        // Create custom product name if add-ons are selected
         String customProductName = product.getName();
         if (!selectedAddOn.equals("None")) {
             customProductName += " + " + selectedAddOn;
         }
 
-        // Use OrderController's enhanced method if available, otherwise use static cart
         if (orderController != null) {
-            orderController.addEnhancedProductToCart(product, quantity, "Medium", selectedAddOn, customProductName, totalPrice);
+            orderController.addEnhancedProductToCart(product, quantity, selectedAddOn, customProductName, totalPrice);
         } else {
-            // Fallback to static cart
             OrderItem orderItem = new OrderItem();
             orderItem.setProductId(product.getId());
             orderItem.setProductName(customProductName);
@@ -272,6 +284,7 @@ public class ProductCardController implements Initializable {
         }
     }
 
+    // Add to Cart button
     @FXML
     private void handleButtonHover(MouseEvent event) {
         if (addToCartButton != null && !addToCartButton.isDisabled()) {
@@ -308,23 +321,4 @@ public class ProductCardController implements Initializable {
         alert.showAndWait();
     }
 
-    // Static method to get cart items (for other controllers to access)
-    public static List<OrderItem> getCartItems() {
-        return new ArrayList<>(cartItems);
-    }
-
-    // Static method to clear cart
-    public static void clearCart() {
-        cartItems.clear();
-    }
-
-    // Static method to get cart total
-    public static double getCartTotal() {
-        return cartItems.stream().mapToDouble(OrderItem::getTotalPrice).sum();
-    }
-
-    // Static method to get cart item count
-    public static int getCartItemCount() {
-        return cartItems.stream().mapToInt(OrderItem::getQuantity).sum();
-    }
 }
