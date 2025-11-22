@@ -1,0 +1,102 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.ComboBox?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.TextField?>
+<?import javafx.scene.image.ImageView?>
+<?import javafx.scene.layout.AnchorPane?>
+<?import javafx.scene.text.Font?>
+<?import org.kordamp.ikonli.javafx.FontIcon?>
+
+<AnchorPane prefHeight="520.0" prefWidth="500.0" style="-fx-background-color: #F5EDE0; -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.3), 25, 0, 0, 8);" xmlns="http://javafx.com/javafx/25" xmlns:fx="http://javafx.com/fxml/1" fx:controller="controller.ProductUpdatePopupController">
+   <children>
+      <Label layoutX="25.0" layoutY="20.0" style="-fx-font-weight: bold; -fx-text-fill: #2C2C2C;" text="Update Product">
+         <font>
+            <Font name="Calibri Bold" size="24.0" />
+         </font>
+         <graphic>
+            <FontIcon iconLiteral="bi-pencil-square" iconSize="25" />
+         </graphic>
+      </Label>
+      
+      <!-- Product ID (Read-only) -->
+      <Label layoutX="25.0" layoutY="70.0" style="-fx-text-fill: #2C2C2C;" text="Product ID:">
+         <font>
+            <Font name="Calibri" size="14.0" />
+         </font>
+      </Label>
+      <TextField fx:id="productIdField" editable="false" layoutX="25.0" layoutY="90.0" prefHeight="32.0" prefWidth="200.0" style="-fx-background-color: #E8E8E8; -fx-background-radius: 8; -fx-border-color: #CCCCCC; -fx-border-radius: 8;" />
+      
+      <!-- Product Name -->
+      <Label layoutX="25.0" layoutY="135.0" style="-fx-text-fill: #2C2C2C;" text="Product Name:">
+         <font>
+            <Font name="Calibri" size="14.0" />
+         </font>
+      </Label>
+      <TextField fx:id="productNameField" layoutX="25.0" layoutY="155.0" prefHeight="32.0" prefWidth="200.0" style="-fx-background-color: white; -fx-background-radius: 8; -fx-border-color: #CCCCCC; -fx-border-radius: 8;" />
+      
+      <!-- Category -->
+      <Label layoutX="26.0" layoutY="334.0" style="-fx-text-fill: #2C2C2C;" text="Category:">
+         <font>
+            <Font name="Calibri" size="14.0" />
+         </font>
+      </Label>
+      <ComboBox fx:id="categoryComboBox" layoutX="25.0" layoutY="352.0" prefHeight="32.0" prefWidth="200.0" style="-fx-background-color: white; -fx-background-radius: 8;" />
+      
+      <!-- Price -->
+      <Label layoutX="27.0" layoutY="202.0" style="-fx-text-fill: #2C2C2C;" text="Price (₱):">
+         <font>
+            <Font name="Calibri" size="14.0" />
+         </font>
+      </Label>
+      <TextField fx:id="priceField" layoutX="25.0" layoutY="220.0" prefHeight="32.0" prefWidth="200.0" style="-fx-background-color: white; -fx-background-radius: 8; -fx-border-color: #CCCCCC; -fx-border-radius: 8;" />
+      
+      <!-- Stock -->
+      <Label layoutX="25.0" layoutY="265.0" style="-fx-text-fill: #2C2C2C;" text="Stock:">
+         <font>
+            <Font name="Calibri" size="14.0" />
+         </font>
+      </Label>
+      <TextField fx:id="stockField" layoutX="25.0" layoutY="283.0" prefHeight="32.0" prefWidth="200.0" style="-fx-background-color: white; -fx-background-radius: 8; -fx-border-color: #CCCCCC; -fx-border-radius: 8;" />
+      
+      <!-- Status -->
+      <Label layoutX="26.0" layoutY="400.0" style="-fx-text-fill: #2C2C2C;" text="Status:">
+         <font>
+            <Font name="Calibri" size="14.0" />
+         </font>
+      </Label>
+      <ComboBox fx:id="statusComboBox" layoutX="25.0" layoutY="418.0" prefHeight="32.0" prefWidth="200.0" style="-fx-background-color: white; -fx-background-radius: 8;" />
+      
+      <!-- Image Section -->
+      <Label layoutX="303.0" layoutY="70.0" style="-fx-text-fill: #2C2C2C;" text="Product Image">
+         <font>
+            <Font name="Calibri Bold" size="14.0" />
+         </font>
+      </Label>
+      <ImageView fx:id="productImageView" fitHeight="160.0" fitWidth="160.0" layoutX="270.0" layoutY="91.0" pickOnBounds="true" preserveRatio="true" style="-fx-effect: dropshadow(gaussian, rgba(0,0,0,0.15), 8, 0, 0, 2);" />
+      
+      <!-- Image Buttons -->
+      <Button fx:id="selectImageButton" layoutX="270.0" layoutY="285.0" mnemonicParsing="false" onAction="#handleSelectImage" prefHeight="28.0" prefWidth="75.0" style="-fx-background-color: linear-gradient(to bottom, #2196F3 0%, #1E88E5 50%, #1976D2 100%); -fx-background-radius: 6; -fx-text-fill: white; -fx-font-size: 10px; -fx-cursor: hand;" text="Select" />
+      <Button fx:id="removeImageButton" layoutX="357.0" layoutY="285.0" mnemonicParsing="false" onAction="#handleRemoveImage" prefHeight="28.0" prefWidth="75.0" style="-fx-background-color: #F44336; -fx-background-radius: 6; -fx-text-fill: white; -fx-font-size: 10px; -fx-cursor: hand;" text="Remove" />
+      
+      <!-- Action Buttons -->
+      <Button fx:id="updateButton" layoutX="270.0" layoutY="418.0" mnemonicParsing="false" onAction="#handleUpdate" prefHeight="32.0" prefWidth="160.0" style="-fx-background-color: linear-gradient(to bottom, #2196F3 0%, #1E88E5 50%, #1976D2 100%); -fx-background-radius: 12; -fx-text-fill: white; -fx-font-weight: bold; -fx-cursor: hand; -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.2), 8, 0, 0, 2);" text="Update Product">
+         <font>
+            <Font name="Calibri Bold" size="14.0" />
+         </font>
+         <graphic>
+            <FontIcon iconColor="WHITE" iconLiteral="bi-check-circle" iconSize="16" />
+         </graphic>
+      </Button>
+      
+      <Button fx:id="cancelButton" layoutX="270.0" layoutY="352.0" mnemonicParsing="false" onAction="#handleCancel" prefHeight="32.0" prefWidth="160.0" style="-fx-background-color: #F44336; -fx-background-radius: 12; -fx-text-fill: white; -fx-font-weight: bold; -fx-cursor: hand; -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.2), 8, 0, 0, 2);" text="Cancel">
+         <font>
+            <Font name="Calibri Bold" size="14.0" />
+         </font>
+         <graphic>
+            <FontIcon iconColor="WHITE" iconLiteral="bi-x-circle" iconSize="16" />
+         </graphic>
+      </Button>
+   </children>
+</AnchorPane>
