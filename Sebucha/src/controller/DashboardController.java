@@ -25,10 +25,15 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.text.DecimalFormat;
-import java.time.LocalDate;
 import java.util.Optional;
 import java.util.ResourceBundle;
 
+//DashboardController
+
+//Shows business metrics (today's income, products sold, total income)
+//and charts (best sellers, recent income). Also handles navigation and a 
+//2-Step Verification that clears order data and resets the dashboard.
+ 
 public class DashboardController implements Initializable {
 
     // Navigation buttons
@@ -69,19 +74,21 @@ public class DashboardController implements Initializable {
         // Adjust window properties after UI loads
         Platform.runLater(() -> {
             Stage stage = (Stage) dashboardbutton.getScene().getWindow();
-            stage.setResizable(true);
+            stage.setResizable(false);
             stage.centerOnScreen();
         });
     }
 
-    // ========== Navigation Handlers ==========
+    //Navigation Handlers
 
+    // Already on Dashboard — refresh metrics. 
     @FXML
     private void handleDashboardButton(ActionEvent event) {
-        // Already on the dashboard — just refresh data
+        //Refresh data
         refreshDashboard();
     }
 
+    // Navigate to Inventory page
     @FXML
     private void handleInventoryButton(ActionEvent event) {
         try {
@@ -91,6 +98,7 @@ public class DashboardController implements Initializable {
         }
     }
 
+    // Navigate to Order page
     @FXML
     private void handleOrderButton(ActionEvent event) {
         try {
@@ -100,6 +108,7 @@ public class DashboardController implements Initializable {
         }
     }
 
+    // Navigate to Recent Orders page
     @FXML
     private void handleRecentOrderButton(ActionEvent event) {
         try {
@@ -109,6 +118,7 @@ public class DashboardController implements Initializable {
         }
     }
 
+    // Confirm and navigate to Login page
     @FXML
     private void handleLogoutButton(ActionEvent event) {
         Alert alert = new Alert(AlertType.CONFIRMATION);
@@ -126,13 +136,14 @@ public class DashboardController implements Initializable {
         }
     }
 
-    // ========== Reset Functionality ==========
-
+    //Reset Functionality
+    //Two-step verification
+     
     @FXML
     private void handleResetButton(ActionEvent event) {
-        // Step 1: Ask user for initial confirmation
+        // First verification step
         Alert firstConfirmation = new Alert(AlertType.WARNING);
-        firstConfirmation.setTitle("Reset Confirmation - Step 1");
+        firstConfirmation.setTitle("Reset Confirmation - 1st Verification");
         firstConfirmation.setHeaderText("Reset all order history and dashboard data?");
         firstConfirmation.setContentText(
             "This will permanently delete:\n" +
@@ -150,17 +161,16 @@ public class DashboardController implements Initializable {
         Optional<ButtonType> firstResult = firstConfirmation.showAndWait();
 
         if (firstResult.isPresent() && firstResult.get() == continueButton) {
-            // Step 2: Final warning before permanent deletion
+            // 2nd verification: Final warning before permanent reset
             Alert secondConfirmation = new Alert(AlertType.ERROR);
-            secondConfirmation.setTitle("Reset Confirmation - Final Step");
+            secondConfirmation.setTitle("Reset Confirmation - 2nd Verification");
             secondConfirmation.setHeaderText("⚠️ FINAL WARNING: This action cannot be undone!");
             secondConfirmation.setContentText(
                 "This will:\n\n" +
                 "🗑️ Delete all orders and order items\n" +
                 "📊 Reset dashboard to ₱0.00\n" +
                 "📈 Clear charts and statistics\n" +
-                "📋 Empty recent orders table\n\n" +
-                "Are you absolutely sure?"
+                "📋 Empty recent orders table\n\n" 
             );
 
             ButtonType resetButton = new ButtonType("Yes, Delete Everything");
@@ -186,18 +196,16 @@ public class DashboardController implements Initializable {
         }
     }
 
-    /**
-     * Permanently removes all order and order item data,
-     * then resets related database sequences.
-     */
+    
+    // reset all orders and order items
     private void performCompleteReset() {
         Connection connection = null;
 
         try {
             connection = SqliteConnection.Connector();
-            connection.setAutoCommit(false); // Begin transaction for safety
+            connection.setAutoCommit(false);
 
-            // Delete all order items first (foreign key constraint)
+            // Delete all order items 
             String deleteOrderItemsQuery = "DELETE FROM order_items";
             PreparedStatement deleteItemsStatement = connection.prepareStatement(deleteOrderItemsQuery);
             int itemsDeleted = deleteItemsStatement.executeUpdate();
@@ -207,7 +215,6 @@ public class DashboardController implements Initializable {
             PreparedStatement deleteOrdersStatement = connection.prepareStatement(deleteOrdersQuery);
             int ordersDeleted = deleteOrdersStatement.executeUpdate();
 
-            // Reset auto-increment counters
             try {
                 PreparedStatement resetSequence = connection.prepareStatement(
                     "DELETE FROM sqlite_sequence WHERE name IN ('orders', 'order_items')"
@@ -218,7 +225,7 @@ public class DashboardController implements Initializable {
                 System.out.println("Note: sqlite_sequence table not found or not needed.");
             }
 
-            connection.commit(); // Apply all deletions
+            connection.commit();
 
             System.out.println("=== COMPLETE RESET PERFORMED ===");
             System.out.println("Orders deleted: " + ordersDeleted);
@@ -227,7 +234,6 @@ public class DashboardController implements Initializable {
             System.out.println("===============================");
 
         } catch (SQLException e) {
-            // If anything fails, revert all database changes
             try {
                 if (connection != null) connection.rollback();
             } catch (SQLException rollbackEx) {
@@ -236,7 +242,7 @@ public class DashboardController implements Initializable {
             showAlert("Reset Failed", "An error occurred during reset: " + e.getMessage(), AlertType.ERROR);
             e.printStackTrace();
         } finally {
-            // Restore autocommit and close connection
+           
             try {
                 if (connection != null) {
                     connection.setAutoCommit(true);
@@ -248,11 +254,9 @@ public class DashboardController implements Initializable {
         }
     }
 
-    // ========== Data Loading ==========
+  
 
-    /**
-     * Loads all dashboard data and updates labels and charts.
-     */
+    // Loads all dashboard metrics and charts
     private void loadDashboardData() {
         loadTodayIncomeFromRecentOrders();
         loadProductsSoldFromRecentOrders();
@@ -261,12 +265,13 @@ public class DashboardController implements Initializable {
         loadIncomeChart();
     }
 
+    // Loads today's income from the orders table last 18 hours
     private void loadTodayIncomeFromRecentOrders() {
         Connection connection = null;
         try {
             connection = SqliteConnection.Connector();
             String query = "SELECT SUM(total_amount) as today_total FROM orders " +
-                           "WHERE datetime(order_date || ' ' || order_time) >= datetime('now', '-24 hours')";
+                           "WHERE datetime(order_date || ' ' || order_time) >= datetime('now', '-18 hours')";
 
             PreparedStatement statement = connection.prepareStatement(query);
             ResultSet resultSet = statement.executeQuery();
@@ -286,13 +291,14 @@ public class DashboardController implements Initializable {
         }
     }
 
+    // Loads products sold in the last 18 hours from order_items.
     private void loadProductsSoldFromRecentOrders() {
         Connection connection = null;
         try {
             connection = SqliteConnection.Connector();
             String query = "SELECT SUM(oi.quantity) as total_sold FROM order_items oi " +
                            "JOIN orders o ON oi.order_id = o.id " +
-                           "WHERE datetime(o.order_date || ' ' || o.order_time) >= datetime('now', '-24 hours')";
+                           "WHERE datetime(o.order_date || ' ' || o.order_time) >= datetime('now', '-18 hours')";
 
             PreparedStatement statement = connection.prepareStatement(query);
             ResultSet resultSet = statement.executeQuery();
@@ -312,6 +318,7 @@ public class DashboardController implements Initializable {
         }
     }
 
+    // Loads all-time income from the orders table
     private void loadTotalIncomeFromRecentOrders() {
         Connection connection = null;
         try {
@@ -336,8 +343,9 @@ public class DashboardController implements Initializable {
         }
     }
 
-    // ========== Charts ==========
+    //Charts
 
+    // best sellers bar chart from top 5 sold items
     private void loadBestSellersChart() {
         String sql = "SELECT p.name, SUM(oi.quantity) as total_quantity " +
                      "FROM order_items oi " +
@@ -353,9 +361,35 @@ public class DashboardController implements Initializable {
             bestsellers.getData().clear();
             XYChart.Series<String, Number> series = new XYChart.Series<>();
             series.setName("Best Sellers");
-
+            
+            // Color sa bars
+            String[] colors = {
+                "#FF6B6B", // Coral Red
+                "#4ECDC4", // Turquoise 
+                "#45B7D1", // Sky Blue
+                "#96CEB4", // Mint Green
+                "#FFEAA7"  // Soft Yellow
+            };
+            
+            int colorIndex = 0;
             while (result.next()) {
-                series.getData().add(new XYChart.Data<>(result.getString("name"), result.getInt("total_quantity")));
+                XYChart.Data<String, Number> data = new XYChart.Data<>(
+                    result.getString("name"), 
+                    result.getInt("total_quantity")
+                );
+                series.getData().add(data);
+                
+           
+                final String color = colors[colorIndex % colors.length];
+                final XYChart.Data<String, Number> finalData = data;
+                
+                Platform.runLater(() -> {
+                    if (finalData.getNode() != null) {
+                        finalData.getNode().setStyle("-fx-bar-fill: " + color + ";");
+                    }
+                });
+                
+                colorIndex++;
             }
 
             bestsellers.getData().add(series);
@@ -366,6 +400,7 @@ public class DashboardController implements Initializable {
         }
     }
 
+    // last 7-days income chart
     private void loadIncomeChart() {
         String sql = "SELECT DATE(order_date) as date, SUM(total_amount) as daily_income " +
                      "FROM orders WHERE order_date >= date('now', '-7 days') " +
@@ -390,15 +425,14 @@ public class DashboardController implements Initializable {
         }
     }
 
-    /**
-     * Sets up chart properties
-     */
+    //  Sets up chart properties
+     
     private void setupCharts() {
         bestsellers.setLegendVisible(false);
         bestsellers.setAnimated(true);
 
         if (bestsellers.getXAxis() instanceof javafx.scene.chart.CategoryAxis xAxis) {
-            xAxis.setTickLabelRotation(0); // Keep labels horizontal
+            xAxis.setTickLabelRotation(0);
         }
 
         incomechart.setLegendVisible(false);
@@ -406,12 +440,14 @@ public class DashboardController implements Initializable {
         incomechart.setCreateSymbols(false);
     }
 
-    // ========== Utility ==========
+    // Utility
 
+    // Refreshes all dashboard metrics and charts
     private void refreshDashboard() {
         loadDashboardData();
     }
 
+    // Helper to switch scenes
     private void loadScene(ActionEvent event, String fxmlPath) throws IOException {
         Parent root = FXMLLoader.load(getClass().getResource(fxmlPath));
         Stage stage = (Stage) ((Node) event.getSource()).getScene().getWindow();
@@ -420,6 +456,7 @@ public class DashboardController implements Initializable {
         stage.show();
     }
 
+    //Show alerts
     private void showAlert(String title, String message, AlertType type) {
         Alert alert = new Alert(type);
         alert.setTitle(title);
@@ -428,25 +465,4 @@ public class DashboardController implements Initializable {
         alert.showAndWait();
     }
 
-    /**
-     * A helper for testing — prints dashboard metrics to the console.
-     * Used for verifying data consistency between controllers.
-     */
-    public void demonstrateDashboardMetrics() {
-        try {
-            RecentOrderController recentOrderController = new RecentOrderController();
-            double todaysIncome = recentOrderController.getTodaysIncome();
-            int productsSold = recentOrderController.getTodaysProductsSold();
-            double totalRevenue = recentOrderController.getTotalRevenue();
-
-            System.out.println("=== DASHBOARD METRICS ===");
-            System.out.println("Today's Income (24h): ₱" + decimalFormat.format(todaysIncome));
-            System.out.println("Products Sold (24h): " + productsSold);
-            System.out.println("Total Revenue: ₱" + decimalFormat.format(totalRevenue));
-            System.out.println("=========================");
-
-        } catch (Exception e) {
-            System.err.println("Error retrieving dashboard metrics: " + e.getMessage());
-        }
-    }
 }
