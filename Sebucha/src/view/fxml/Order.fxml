@@ -47,10 +47,10 @@
                                     <Font name="Calibri" size="16.0" />
                                  </font>
                                  <graphic>
-                                    <FontIcon iconLiteral="bi-cart-dash" iconSize="20" />
+                                    <FontIcon iconLiteral="bi-cart3" iconSize="20" />
                                  </graphic>
                               </Button>
-                              <Button fx:id="logoutbutton" layoutX="14.0" layoutY="700.0" mnemonicParsing="false" onAction="#handleLogoutButton" prefHeight="35.0" prefWidth="95.0" style="-fx-background-color: linear-gradient(to bottom, #EF4444 0%, #DC2626 50%, #991B1B 100%); -fx-background-radius: 12; -fx-effect: dropshadow(gaussian, rgba(183,28,28,0.5), 10, 0, 0, 3); -fx-cursor: hand; -fx-border-color: rgba(255,255,255,0.2); -fx-border-width: 1; -fx-border-radius: 12;" text="Logout" textAlignment="CENTER" textFill="WHITE">
+                              <Button fx:id="logoutbutton" layoutX="15.0" layoutY="700.0" mnemonicParsing="false" onAction="#handleLogoutButton" prefHeight="35.0" prefWidth="170.0" style="-fx-background-color: linear-gradient(to bottom, #EF4444 0%, #DC2626 50%, #991B1B 100%); -fx-background-radius: 15; -fx-effect: dropshadow(gaussian, rgba(183,28,28,0.5), 10, 0, 0, 3); -fx-cursor: hand; -fx-border-color: rgba(255,255,255,0.2); -fx-border-width: 1; -fx-border-radius: 12;" text="Logout" textAlignment="CENTER" textFill="WHITE">
                                  <font>
                                     <Font name="Calibri Bold" size="15.0" />
                                  </font>
@@ -71,7 +71,7 @@
                                     <Font name="Calibri Bold" size="19.0" />
                                  </font>
                               </Label>
-                              <ImageView fitHeight="140.0" fitWidth="140.0" layoutX="30.0" layoutY="14.0" pickOnBounds="true" preserveRatio="true" style="-fx-effect: dropshadow(gaussian, rgba(0,0,0,0.25), 15, 0, 0, 5);">
+                              <ImageView fitHeight="140.0" fitWidth="140.0" layoutX="30.0" layoutY="14.0" pickOnBounds="true" preserveRatio="true">
                                  <image>
                                     <Image url="@../images/sebucha1.png" />
                                  </image>
@@ -97,11 +97,11 @@
                               </TextField>
                               
                              
-                              <ComboBox fx:id="productCategoryFilter" layoutX="398.0" layoutY="16.0" prefHeight="40.0" prefWidth="180.0" promptText="All Categories" style="-fx-background-color: linear-gradient(to bottom, #FFFFFF, #E2E8F0);">
+                              <ComboBox fx:id="productCategoryFilter" layoutX="365.0" layoutY="16.0" prefHeight="40.0" prefWidth="180.0" promptText="All Categories" style="-fx-background-color: linear-gradient(to bottom, #FFFFFF, #E2E8F0); -fx-background-radius: 8;">
                               </ComboBox>
                               
                             
-                              <Button fx:id="clearFilterButton" layoutX="615.0" layoutY="16.0" mnemonicParsing="false" onAction="#handleClearFilter" prefHeight="40.0" prefWidth="120.0" style="-fx-background-color: linear-gradient(to bottom, #BDBDBD, #9E9E9E); -fx-background-radius: 12; -fx-effect: dropshadow(gaussian, rgba(158,158,158,0.4), 8, 0, 0, 2); -fx-cursor: hand;" styleClass="button secondary" text="Clear" textFill="WHITE">
+                              <Button fx:id="clearFilterButton" layoutX="556.0" layoutY="16.0" mnemonicParsing="false" onAction="#handleClearFilter" prefHeight="40.0" prefWidth="180.0" style="-fx-background-color: linear-gradient(to bottom, #BDBDBD, #9E9E9E); -fx-background-radius: 8; -fx-effect: dropshadow(gaussian, rgba(158,158,158,0.4), 8, 0, 0, 2); -fx-cursor: hand;" styleClass="button secondary" text="Clear" textFill="WHITE">
                                  <font>
                                     <Font name="Calibri Bold" size="15.0" />
                                  </font>
@@ -138,67 +138,52 @@
                         <AnchorPane layoutX="785.0" layoutY="15.0" prefHeight="720.0" prefWidth="500.0" style="-fx-background-color: #F5EDE0; -fx-background-radius: 20; -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.2), 20, 0, 0, 5);" styleClass="card">
                            <children>
                               
-                              <TableView fx:id="shoppingCartTable" layoutX="20.0" layoutY="23.0" prefHeight="400.0" prefWidth="460.0" style="-fx-background-color: linear-gradient(to bottom, #FFFFFF, #D9D9D9);">
+                              <TableView fx:id="shoppingCartTable" layoutX="20.0" layoutY="53.0" prefHeight="430.0" prefWidth="460.0" style="-fx-background-color: linear-gradient(to bottom, #FFFFFF, #D9D9D9);">
                                  <columns>
                                     <TableColumn fx:id="cartProductColumn" prefWidth="140.0" text="Product" />
                                     <TableColumn fx:id="cartPriceColumn" prefWidth="80.0" text="Price" />
                                     <TableColumn fx:id="cartQuantityColumn" prefWidth="60.0" text="Qty" />
                                     <TableColumn fx:id="cartTotalColumn" prefWidth="90.0" text="Total" />
-                                    <TableColumn fx:id="cartActionColumn" prefWidth="90.0" />
+                                    <TableColumn fx:id="cartActionColumn" prefWidth="90.0" text="Actions" />
                                  </columns>
                               </TableView>
                             
-                              <Label layoutX="14.0" layoutY="484.0" style="-fx-text-fill: #2C2C2C;" styleClass="label" text="Customer Name:">
+                              <Label layoutX="14.0" layoutY="493.0" style="-fx-text-fill: #2C2C2C;" styleClass="label" text="Customer Name:">
                                  <font>
                                     <Font name="Calibri Bold" size="14.0" />
                                  </font>
                               </Label>
                               
                             
-                              <Label layoutX="14.0" layoutY="633.0" style="-fx-text-fill: #2C2C2C;" text="Order Type:">
+                              <Label layoutX="15.0" layoutY="639.0" style="-fx-text-fill: #2C2C2C;" text="Order Type:">
                                  <font>
                                     <Font name="Calibri Bold" size="14.0" />
                                  </font>
                               </Label>
-                              <Button fx:id="refreshOrderButton" layoutX="403.0" layoutY="481.0" mnemonicParsing="false" onAction="#handleRefreshOrder" prefHeight="18.0" prefWidth="74.0" style="-fx-background-color: linear-gradient(to bottom, #FFB75E, #ED8F03); -fx-background-radius: 12; -fx-effect: dropshadow(gaussian, rgba(112,130,56,0.4), 8, 0, 0, 2); -fx-cursor: hand;" styleClass="button secondary" text="Refresh" textFill="WHITE">
-                                 <font>
-                                    <Font name="Calibri Bold" size="12.0" />
-                                 </font>
-                                 <graphic>
-                                    <FontIcon iconColor="WHITE" iconLiteral="bi-arrow-clockwise" iconSize="14" />
-                                 </graphic>
-                              </Button>
-                              <ComboBox fx:id="orderTypeComboBox" layoutX="14.0" layoutY="658.0" prefHeight="36.0" prefWidth="200.0" promptText="Select type" style="-fx-background-color: linear-gradient(to bottom, #FFFFFF, #E2E8F0);">
+                              <ComboBox fx:id="orderTypeComboBox" layoutX="14.0" layoutY="658.0" prefHeight="36.0" prefWidth="200.0" promptText="Select type" style="-fx-background-color: linear-gradient(to bottom, #FFFFFF, #E2E8F0); -fx-background-radius: 8;">
                               </ComboBox>
-                              <TextField fx:id="customerNameField" layoutX="14.0" layoutY="514.0" prefHeight="35.0" prefWidth="200.0" promptText="Enter customer name" style="-fx-background-color: linear-gradient(to bottom, #FFFFFF, #E2E8F0);">
+                              <TextField fx:id="customerNameField" layoutX="14.0" layoutY="514.0" prefHeight="35.0" prefWidth="200.0" promptText="Enter customer name" style="-fx-background-color: linear-gradient(to bottom, #FFFFFF, #E2E8F0); -fx-background-radius: 8;">
                                  <font>
                                     <Font name="Calibri" size="14.0" />
                                  </font>
                               </TextField>
                               
                             
-                              <Label layoutX="14.0" layoutY="556.0" style="-fx-text-fill: #2C2C2C;" text="Payment Method:">
+                              <Label layoutX="15.0" layoutY="568.0" style="-fx-text-fill: #2C2C2C;" text="Payment Method:">
                                  <font>
                                     <Font name="Calibri Bold" size="14.0" />
                                  </font>
                               </Label>
-                              
-                             
-                              <Label layoutX="238.0" layoutY="481.0" style="-fx-text-fill: #2C2C2C;" styleClass="subheading" text="Total Order:">
-                                 <font>
-                                    <Font name="Calibri Bold" size="18.0" />
-                                 </font>
-                              </Label>
-                              <ComboBox fx:id="paymentMethodComboBox" layoutX="14.0" layoutY="587.0" prefHeight="36.0" prefWidth="200.0" promptText="Select method" style="-fx-background-color: linear-gradient(to bottom, #FFFFFF, #E2E8F0);">
+                              <ComboBox fx:id="paymentMethodComboBox" layoutX="14.0" layoutY="587.0" prefHeight="36.0" prefWidth="200.0" promptText="Select method" style="-fx-background-color: linear-gradient(to bottom, #FFFFFF, #E2E8F0); -fx-background-radius: 8;">
                               </ComboBox>
-                              <TextField fx:id="orderTotalField" editable="false" layoutX="238.0" layoutY="514.0" prefHeight="60.0" prefWidth="240.0" promptText="₱0.00" style="-fx-background-color: #F0F8FF; -fx-background-radius: 12; -fx-border-color: linear-gradient(to bottom, #4ADE80 0%, #22C55E 50%, #16A34A 100%); -fx-border-radius: 12; -fx-border-width: 2;">
+                              <TextField fx:id="orderTotalField" editable="false" layoutX="238.0" layoutY="502.0" prefHeight="60.0" prefWidth="240.0" promptText="₱0.00" style="-fx-background-color: #F0F8FF; -fx-background-radius: 8; -fx-border-color: linear-gradient(to bottom, #22C55E 0%, #16A34A 50%, #15803D 100%); -fx-border-radius: 8; -fx-border-width: 2;">
                                  <font>
                                     <Font name="Calibri Bold" size="28.0" />
                                  </font>
                               </TextField>
                               
        
-                              <Button fx:id="placeOrderButton" layoutX="238.0" layoutY="587.0" mnemonicParsing="false" onAction="#handlePlaceOrder" prefHeight="55.0" prefWidth="240.0" style="-fx-background-color: linear-gradient(to bottom, #22C55E 0%, #16A34A 50%, #15803D 100%); -fx-background-radius: 12; -fx-effect: dropshadow(gaussian, rgba(112,130,56,0.4), 8, 0, 0, 2); -fx-cursor: hand;" styleClass="button" text="Place Order" textFill="WHITE">
+                              <Button fx:id="placeOrderButton" layoutX="238.0" layoutY="577.0" mnemonicParsing="false" onAction="#handlePlaceOrder" prefHeight="55.0" prefWidth="240.0" style="-fx-background-color: linear-gradient(to bottom, #22C55E 0%, #16A34A 50%, #15803D 100%); -fx-background-radius: 8; -fx-effect: dropshadow(gaussian, rgba(112,130,56,0.4), 8, 0, 0, 2); -fx-cursor: hand;" styleClass="button" text="Place Order" textFill="WHITE">
                                  <font>
                                     <Font name="Calibri Bold" size="25.0" />
                                  </font>
@@ -207,23 +192,15 @@
                                  </graphic>
                               </Button>
                               
-                              <Button fx:id="clearCartButton" layoutX="364.0" layoutY="653.0" mnemonicParsing="false" onAction="#handleClearCart" prefHeight="46.0" prefWidth="115.0" style="-fx-background-color: linear-gradient(to bottom, #EF4444 0%, #DC2626 50%, #991B1B 100%); -fx-background-radius: 12; -fx-effect: dropshadow(gaussian, rgba(112,130,56,0.4), 8, 0, 0, 2); -fx-cursor: hand;" styleClass="button danger" text="Clear Order" textFill="WHITE">
+                              <Button fx:id="clearCartButton" layoutX="238.0" layoutY="648.0" mnemonicParsing="false" onAction="#handleClearCart" prefHeight="55.0" prefWidth="240.0" style="-fx-background-color: linear-gradient(to bottom, #EF4444 0%, #DC2626 50%, #991B1B 100%); -fx-background-radius: 8; -fx-effect: dropshadow(gaussian, rgba(112,130,56,0.4), 8, 0, 0, 2); -fx-cursor: hand;" styleClass="button danger" text="Clear Order" textFill="WHITE">
                                  <font>
-                                    <Font name="Calibri Bold" size="15.0" />
+                                    <Font name="Calibri Bold" size="25.0" />
                                  </font>
                                  <graphic>
-                                    <FontIcon iconColor="WHITE" iconLiteral="bi-x-circle" iconSize="14" />
+                                    <FontIcon iconColor="WHITE" iconLiteral="bi-x-circle" />
                                  </graphic>
                               </Button>
-                              <Button fx:id="receiptButton" layoutX="236.0" layoutY="653.0" mnemonicParsing="false" onAction="#handlePrintReceipt" prefHeight="46.0" prefWidth="115.0" style="-fx-background-color: linear-gradient(to bottom, #3B82F6 0%, #2563EB 50%, #1E40AF 100%); -fx-background-radius: 12; -fx-effect: dropshadow(gaussian, rgba(112,130,56,0.4), 8, 0, 0, 2); -fx-cursor: hand;" text="Receipt" textFill="WHITE">
-                                 <font>
-                                    <Font name="Calibri Bold" size="15.0" />
-                                 </font>
-                                 <graphic>
-                                    <FontIcon iconColor="WHITE" iconLiteral="bi-receipt" iconSize="14" />
-                                 </graphic>
-                              </Button>
-                              <Label layoutX="167.0" layoutY="436.0" styleClass="subheading" text="Order Summary">
+                              <Label layoutX="155.0" layoutY="14.0" styleClass="subheading" text="Order Summary">
                                  <font>
                                     <Font name="Calibri Bold" size="25.0" />
                                  </font>
