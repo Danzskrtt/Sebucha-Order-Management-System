@@ -1,6 +1,5 @@
 package controller;
 
-import javafx.application.Platform;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
@@ -11,11 +10,9 @@ import javafx.scene.Node;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
-import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.layout.FlowPane;
 import javafx.stage.Stage;
 import model.*;
-
 import java.io.IOException;
 import java.net.URL;
 import java.sql.Connection;
@@ -25,11 +22,16 @@ import java.sql.SQLException;
 import java.text.DecimalFormat;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.ResourceBundle;
+
+ //OrderController
+ 
+ //Manages the Order screen workflow: loads available products, filters/searches,
+ //builds product cards, manages a order cart, places orders (saving to DB and
+ //updating stock), prints receipts, and handles navigation.
 
 public class OrderController implements Initializable {
 
@@ -53,7 +55,6 @@ public class OrderController implements Initializable {
     @FXML private TextField orderTotalField;
     @FXML private Button placeOrderButton;
     @FXML private Button clearCartButton;
-    @FXML private Button receiptButton;
 
     // Product Cards Container
     @FXML private ScrollPane productScrollPane;
@@ -72,6 +73,10 @@ public class OrderController implements Initializable {
     private ObservableList<OrderItem> shoppingCart = FXCollections.observableArrayList();
     private DecimalFormat decimalFormat = new DecimalFormat("#0.00");
 
+    
+     //Initializes the UI and data bindings for the Order screen.
+     //Sets defaults, wires combo boxes and table, loads products, and prepares events
+    
     @Override
     public void initialize(URL location, ResourceBundle resources) {
         // Set default customer name
@@ -84,6 +89,10 @@ public class OrderController implements Initializable {
         clearOrderForm();
     }
     
+     
+      //Persists the current cart as an order and its items, and updates inventory stock
+      //Uses a transaction and rolls back on failure
+     
     private boolean placeOrder() {
         Connection connection = null;
         PreparedStatement orderStmt = null;
@@ -109,20 +118,24 @@ public class OrderController implements Initializable {
             orderStmt.setString(2, customerNameField.getText().trim());
             orderStmt.setString(3, orderTypeComboBox.getValue());
             orderStmt.setString(4, paymentMethodComboBox.getValue());
-            orderStmt.setString(5, "Completed"); // Default status
+            orderStmt.setString(5, "Pending"); // Default status changed to Pending
             orderStmt.setDouble(6, shoppingCart.stream().mapToDouble(OrderItem::getTotalPrice).sum());
             orderStmt.setString(7, orderDate);
             orderStmt.setString(8, orderTime);
             
             orderStmt.executeUpdate();
             
-            // Insert order items
+            // Insert order items and update stock for both main products and add-ons
             String orderItemsSql = "INSERT INTO order_items (order_id, product_id, product_name, quantity, unit_price, total_price, customization_details) VALUES (?, ?, ?, ?, ?, ?, ?)";
             orderItemsStmt = connection.prepareStatement(orderItemsSql);
             
-            // Update product stock
+            // Update product stock - separate queries for main products and add-ons
             String updateStockSql = "UPDATE products SET stock = stock - ? WHERE id = ?";
-            try (PreparedStatement updateStockStmt = connection.prepareStatement(updateStockSql)) {
+            String getAddOnIdSql = "SELECT id FROM products WHERE name = ? AND category = 'Add-ons'";
+            
+            try (PreparedStatement updateStockStmt = connection.prepareStatement(updateStockSql);
+                 PreparedStatement getAddOnIdStmt = connection.prepareStatement(getAddOnIdSql)) {
+                
                 for (OrderItem item : shoppingCart) {
                     // Insert order item
                     orderItemsStmt.setString(1, orderId);
@@ -134,10 +147,32 @@ public class OrderController implements Initializable {
                     orderItemsStmt.setString(7, item.getCustomizationDetails());
                     orderItemsStmt.executeUpdate();
                     
-                    // Update stock
+                    // Update stock for main product
                     updateStockStmt.setInt(1, item.getQuantity());
                     updateStockStmt.setInt(2, item.getProductId());
                     updateStockStmt.executeUpdate();
+                    
+                    // Check if this item has add-ons and update their stock too
+                    String addOnName = extractAddOnName(item);
+                    if (addOnName != null && !addOnName.equals("None") && !addOnName.isEmpty()) {
+                        // Get the add-on product ID
+                        getAddOnIdStmt.setString(1, addOnName);
+                        ResultSet addOnResult = getAddOnIdStmt.executeQuery();
+                        
+                        if (addOnResult.next()) {
+                            int addOnId = addOnResult.getInt("id");
+                            // Update add-on stock (same quantity as main product)
+                            PreparedStatement updateAddOnStmt = connection.prepareStatement(updateStockSql);
+                            updateAddOnStmt.setInt(1, item.getQuantity());
+                            updateAddOnStmt.setInt(2, addOnId);
+                            updateAddOnStmt.executeUpdate();
+                            updateAddOnStmt.close();
+                            System.out.println("Updated stock for add-on: " + addOnName + " (ID: " + addOnId + ") by quantity: " + item.getQuantity());
+                        } else {
+                            System.out.println("Add-on not found in database: " + addOnName);
+                        }
+                        addOnResult.close();
+                    }
                 }
             }
             
@@ -169,6 +204,7 @@ public class OrderController implements Initializable {
         }
     }
 
+    // Populates filter/order/payment combo boxes with defaults
     private void initializeComboBoxes() {
     	// Initialize product category filter
         productCategoryFilter.getItems().addAll(
@@ -188,11 +224,15 @@ public class OrderController implements Initializable {
         orderTypeComboBox.setValue("Dine-in");
 
         // Initialize payment method
-        paymentMethodComboBox.getItems().addAll("Cash", "Card", "GCash", "PayMaya");
+        paymentMethodComboBox.getItems().addAll("Cash", "Card", "GCash", "Gothyme");
         paymentMethodComboBox.setValue("Cash");
     }
 
-    private void initializeShoppingCartTable() {
+    
+     //Configures the shopping cart table columns, formatting, and the remove action column
+     
+    @SuppressWarnings("unused")
+	private void initializeShoppingCartTable() {
         System.out.println("Initializing shopping cart table...");
         
         // Initialize shopping cart table columns with proper property binding
@@ -260,7 +300,9 @@ public class OrderController implements Initializable {
         System.out.println("Shopping cart table initialized successfully");
     }
 
-    private void setupEventHandlers() {
+    // Registers listeners for search, category filter, and cart changes
+    @SuppressWarnings("unused")
+	private void setupEventHandlers() {
         // Product search functionality
         productSearchField.textProperty().addListener((observable, oldValue, newValue) -> {
             filterProducts();
@@ -277,6 +319,7 @@ public class OrderController implements Initializable {
         });
     }
 
+    // Loads only available, in-stock products from DB and renders product cards
     private void loadAvailableProducts() {
         availableProducts.clear();
         Connection connection = null;
@@ -339,6 +382,7 @@ public class OrderController implements Initializable {
         }
     }
 
+    // load the product card UI for the current product list.
     private void loadProductCards() {
         productCardsContainer.getChildren().clear();
         
@@ -363,12 +407,14 @@ public class OrderController implements Initializable {
         }
     }
     
+    // Returns whether a product should be shown on the Order page
     private boolean shouldDisplayProduct(Product product) {
         String category = product.getCategory();
         // Only display series and food pair categories, excluding Add-ons
         return category.contains("Series") || category.equals("Food Pair") || category.equals("Hot Drinks");
     }
 
+    // Applies search text and category filter to the visible product cards
     private void filterProducts() {
         String searchText = productSearchField.getText().toLowerCase();
         String selectedCategory = productCategoryFilter.getValue();
@@ -406,6 +452,7 @@ public class OrderController implements Initializable {
         }
     }
 
+    // Adds a product to the cart
     public void addProductToCart(Product product, int quantity) {
         // Check if product already exists in cart
         for (OrderItem item : shoppingCart) {
@@ -431,17 +478,17 @@ public class OrderController implements Initializable {
         shoppingCart.add(newItem);
     }
 
-    // Enhanced method to handle Add-ons and Cups combination logic
-    public void addEnhancedProductToCart(Product product, int quantity, String selectedSize, 
+    
+     //Adds a product with customization add-on, optionally combining with
+     //existing cart items (e.g., add-ons or cups) and keeping totals in sync.
+     
+    public void addEnhancedProductToCart(Product product, int quantity, 
                                        String selectedAddOn, String customProductName, double totalPrice) {
         
-        // Special handling for Add-ons and Cups - they can be combined with other products
-        if (product.getCategory().equals("Add-ons") || product.getCategory().equals("Cups")) {
+        if (product.getCategory().equals("Add-ons")) {
             
-            // Look for existing compatible items in cart that can be combined with this add-on/cup
             OrderItem compatibleItem = null;
             for (OrderItem item : shoppingCart) {
-                // Find items from other categories that can be combined
                 if (item.canCombineWithAddOns() && item.getQuantity() == quantity) {
                     compatibleItem = item;
                     break;
@@ -469,9 +516,8 @@ public class OrderController implements Initializable {
                 
                 if (product.getCategory().equals("Add-ons")) {
                     newDetails += (newDetails.isEmpty() ? "" : ", ") + "Add-on: " + product.getName();
-                } else {
-                    newDetails += (newDetails.isEmpty() ? "" : ", ") + "Cup: " + product.getName();
                 }
+               
                 
                 compatibleItem.setCustomizationDetails(newDetails);
                 shoppingCartTable.refresh();
@@ -482,8 +528,7 @@ public class OrderController implements Initializable {
         // Check if the exact same customized product already exists in cart
         for (OrderItem item : shoppingCart) {
             if (item.getProductId() == product.getId() && 
-                areCustomizationsEqual(item, selectedSize, selectedAddOn)) {
-                // Update quantity for existing customized item
+                areCustomizationsEqual(item, selectedAddOn)) {
                 item.setQuantity(item.getQuantity() + quantity);
                 item.setTotalPrice(item.getQuantity() * item.getUnitPrice());
                 shoppingCartTable.refresh();
@@ -491,25 +536,20 @@ public class OrderController implements Initializable {
             }
         }
         
-        // Create customization details string
         String customizationDetails = "";
-        if (selectedSize != null && !selectedSize.equals("Medium")) {
-            customizationDetails += "Size: " + selectedSize;
-        }
         if (selectedAddOn != null && !selectedAddOn.equals("None")) {
-            if (!customizationDetails.isEmpty()) customizationDetails += ", ";
             customizationDetails += "Add-on: " + selectedAddOn;
         }
         
-        // Add new customized item to cart
+        //item to cart
         OrderItem newItem = new OrderItem(
-            0, // orderId will be set when order is placed
+            0,
             product.getId(),
             customProductName,
             quantity,
             totalPrice / quantity, // unit price
             totalPrice,
-            selectedSize,
+            null, 
             selectedAddOn,
             customizationDetails.isEmpty() ? null : customizationDetails,
             product.getCategory()
@@ -518,8 +558,8 @@ public class OrderController implements Initializable {
         shoppingCart.add(newItem);
     }
     
-    // Helper method to check if customizations match
-    private boolean areCustomizationsEqual(OrderItem item, String size, String addOn) {
+    // check if two items share the same customizations
+    private boolean areCustomizationsEqual(OrderItem item, String addOn) {
         String itemAddOn = item.getAddOn();
         
         // Handle null values for add-ons only
@@ -529,10 +569,12 @@ public class OrderController implements Initializable {
         return itemAddOn.equals(addOn);
     }
 
+    // Removes an item from the shopping cart 
     private void removeFromCart(OrderItem item) {
         shoppingCart.remove(item);
     }
 
+    // cart total and updates the summary field
     private void updateOrderTotal() {
         double total = shoppingCart.stream()
                                  .mapToDouble(OrderItem::getTotalPrice)
@@ -540,6 +582,7 @@ public class OrderController implements Initializable {
         orderTotalField.setText("₱" + decimalFormat.format(total));
     }
 
+    // Clears customer info, cart items, and resets selectors to defaults
     private void clearOrderForm() {
         customerNameField.setText("None"); // Set default value to "None"
         shoppingCart.clear();
@@ -548,6 +591,8 @@ public class OrderController implements Initializable {
         paymentMethodComboBox.setValue("Cash");
     }
 
+    // Actions
+    // Validates and places the order; automatically generates receipt with optional print dialog
     @FXML
     private void handlePlaceOrder(ActionEvent event) {
         if (!shoppingCart.isEmpty()) {
@@ -556,20 +601,70 @@ public class OrderController implements Initializable {
                 customerNameField.setText("None");
             }
             
+            // Store order details before clearing the cart
+            String customerName = customerNameField.getText().trim();
+            String orderType = orderTypeComboBox.getValue();
+            String paymentMethod = paymentMethodComboBox.getValue();
+            double totalAmount = shoppingCart.stream().mapToDouble(OrderItem::getTotalPrice).sum();
+            List<OrderItem> orderItems = new ArrayList<>(shoppingCart);
+            
             if (placeOrder()) {
                 showAlert(Alert.AlertType.INFORMATION, "Success", "Order placed successfully!");
+                
+                // Generate order ID for receipt
+                String orderId = OrderIdGenerator.generateOrderId();
+                
+                // Show receipt generation dialog
+                Alert receiptDialog = new Alert(Alert.AlertType.CONFIRMATION);
+                receiptDialog.setTitle("Generate Receipt");
+                receiptDialog.setHeaderText("Order placed successfully!");
+                receiptDialog.setContentText("Would you like to generate and save a receipt for this order?");
+                
+                ButtonType yesButton = new ButtonType("Yes, Generate Receipt");
+                ButtonType noButton = new ButtonType("No, Skip Receipt");
+                receiptDialog.getButtonTypes().setAll(yesButton, noButton);
+                
+                Optional<ButtonType> receiptResult = receiptDialog.showAndWait();
+                if (receiptResult.isPresent() && receiptResult.get() == yesButton) {
+                    try {
+                        // Get current stage
+                        Stage currentStage = (Stage) ((Node) event.getSource()).getScene().getWindow();
+                        
+                        // Generate receipt using ReceiptGenerator
+                        boolean receiptSuccess = ReceiptGenerator.generateReceipt(
+                            currentStage, 
+                            orderId,
+                            customerName,
+                            orderType, 
+                            paymentMethod, 
+                            totalAmount, 
+                            orderItems
+                        );
+                        
+                        if (!receiptSuccess) {
+                            showAlert(Alert.AlertType.INFORMATION, "Receipt", "Receipt generation was cancelled or failed.");
+                        }
+                        
+                    } catch (Exception e) {
+                        showAlert(Alert.AlertType.ERROR, "Error", "Could not generate receipt: " + e.getMessage());
+                        e.printStackTrace();
+                    }
+                }
+                
                 clearOrderForm();
             }
         } else {
-            showAlert(Alert.AlertType.WARNING, "Validation Error", "Please add items to cart before placing order.");
+            showAlert(Alert.AlertType.WARNING, "Place Order First", "Please add items to cart before placing order.");
         }
     }
 
+    //Reloads product list from the database
     @FXML
     private void handleRefreshOrder(ActionEvent event) {
         loadAvailableProducts();
     }
 
+    // Clears search text and category filter, then reapplies filtering
     @FXML
     private void handleClearFilter(ActionEvent event) {
         productSearchField.clear();
@@ -577,6 +672,7 @@ public class OrderController implements Initializable {
         filterProducts();
     }
 
+    //Confirms and empties the shopping cart
     @FXML
     private void handleClearCart(ActionEvent event) {
         if (!shoppingCart.isEmpty()) {
@@ -593,56 +689,9 @@ public class OrderController implements Initializable {
         }
     }
 
-    @FXML
-    private void handlePrintReceipt(ActionEvent event) {
-        if (shoppingCart.isEmpty()) {
-            showAlert(Alert.AlertType.WARNING, "No Items", "Please add items to cart before printing receipt.");
-            return;
-        }
-
-        String customerName = customerNameField.getText().trim();
-        if (customerName.isEmpty()) {
-            customerName = "None";
-            customerNameField.setText(customerName);
-        }
-
-        try {
-            // Generate unique order ID using OrderIdGenerator
-            String orderId = OrderIdGenerator.generateOrderId();
-            
-            // Get order details
-            String orderType = orderTypeComboBox.getValue();
-            String paymentMethod = paymentMethodComboBox.getValue();
-            double totalAmount = shoppingCart.stream().mapToDouble(OrderItem::getTotalPrice).sum();
-            
-            // Get current stage
-            Stage currentStage = (Stage) ((Node) event.getSource()).getScene().getWindow();
-            
-            // Convert shopping cart to list for receipt generator
-            List<OrderItem> orderItems = new ArrayList<>(shoppingCart);
-            
-            // Generate receipt using ReceiptGenerator
-            boolean success = ReceiptGenerator.generateReceipt(
-                currentStage, 
-                orderId,
-                customerName,
-                orderType, 
-                paymentMethod, 
-                totalAmount, 
-                orderItems
-            );
-            
-            if (success) {
-                showAlert(Alert.AlertType.INFORMATION, "Receipt", "Receipt generated and saved successfully!");
-            }
-
-        } catch (Exception e) {
-            showAlert(Alert.AlertType.ERROR, "Error", "Could not generate receipt: " + e.getMessage());
-            e.printStackTrace();
-        }
-    }
-
     // Navigation methods
+    
+    //Dashboard page
     @FXML
     private void handleDashboardButton(ActionEvent event) {
         try {
@@ -652,6 +701,7 @@ public class OrderController implements Initializable {
         }
     }
 
+    //Inventory page
     @FXML
     private void handleInventoryButton(ActionEvent event) {
         try {
@@ -661,12 +711,14 @@ public class OrderController implements Initializable {
         }
     }
 
+    // Refreshes Order page
     @FXML
     private void handleOrderButton(ActionEvent event) {
         // Already on order page
         loadAvailableProducts();
     }
 
+    // Recent Orders page
     @FXML
     private void handleRecentOrderButton(ActionEvent event) {
         try {
@@ -676,6 +728,7 @@ public class OrderController implements Initializable {
         }
     }
 
+    // Confirms and logs out to the Login page
     @FXML
     private void handleLogoutButton(ActionEvent event) {
         Alert alert = new Alert(Alert.AlertType.CONFIRMATION);
@@ -703,11 +756,55 @@ public class OrderController implements Initializable {
         stage.show();
     }
 
+    //alert message
     private void showAlert(Alert.AlertType type, String title, String message) {
         Alert alert = new Alert(type);
         alert.setTitle(title);
         alert.setHeaderText(null);
         alert.setContentText(message);
         alert.showAndWait();
+    }
+
+    //add-on name for a cart item from structured fields,
+    //customization details, or the display name
+
+    private String extractAddOnName(OrderItem item) {
+        String addOnFromField = item.getAddOn();
+        if (addOnFromField != null && !addOnFromField.equals("None") && !addOnFromField.isEmpty()) {
+            if (addOnFromField.contains(" (+₱")) {
+                return addOnFromField.substring(0, addOnFromField.indexOf(" (+₱"));
+            }
+            return addOnFromField;
+        }
+        
+        //Extract add-on name from customization details
+        String details = item.getCustomizationDetails();
+        if (details != null && !details.isEmpty()) {
+            String[] parts = details.split(", ");
+            for (String part : parts) {
+                if (part.startsWith("Add-on: ")) {
+                    String addOnName = part.substring("Add-on: ".length());
+                    if (addOnName.contains(" (+₱")) {
+                        return addOnName.substring(0, addOnName.indexOf(" (+₱"));
+                    }
+                    return addOnName;
+                }
+            }
+        }
+        
+        //Extract from product name if it contains " + "
+        String productName = item.getProductName();
+        if (productName != null && productName.contains(" + ")) {
+            String[] nameParts = productName.split(" \\+ ");
+            if (nameParts.length > 1) {
+                String addOnPart = nameParts[1];
+                if (addOnPart.contains(" (+₱")) {
+                    return addOnPart.substring(0, addOnPart.indexOf(" (+₱"));
+                }
+                return addOnPart;
+            }
+        }
+        
+        return null;
     }
 }
