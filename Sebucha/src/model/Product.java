@@ -14,7 +14,6 @@ public class Product {
 
     public Product() {}
 
-    // Constructor that matches OrderController expectations
     public Product(int id, String name, String category, double price, int stock, String status, String imagePath, LocalDateTime dateAdded) {
         this.id = id;
         this.name = name;
@@ -24,33 +23,6 @@ public class Product {
         this.status = status;
         this.imagePath = imagePath;
         this.dateAdded = dateAdded;
-    }
-
-    // Alternative constructor with String dateAdded (for backward compatibility)
-    public Product(int id, String name, String category, double price, int stock, String status, String imagePath, String dateAdded) {
-        this.id = id;
-        this.name = name;
-        this.category = category;
-        this.price = price;
-        this.stock = stock;
-        this.status = status;
-        this.imagePath = imagePath;
-        this.dateAdded = LocalDateTime.now(); // Default to current time
-    }
-
-    // Constructor with Unix timestamp (long) for date_added field
-    public Product(int id, String name, String category, double price, int stock, String status, String imagePath, long unixTimestamp) {
-        this.id = id;
-        this.name = name;
-        this.category = category;
-        this.price = price;
-        this.stock = stock;
-        this.status = status;
-        this.imagePath = imagePath;
-        this.dateAdded = java.time.LocalDateTime.ofInstant(
-            java.time.Instant.ofEpochSecond(unixTimestamp), 
-            java.time.ZoneId.systemDefault()
-        );
     }
 
     // Getters
