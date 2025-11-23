@@ -93,6 +93,9 @@ public class InventoryController implements Initializable {
         // Setup combo boxes
         setupComboBoxes();
         
+        // Setup image view for automatic centering and sizing
+        setupImageView();
+        
         // Setup table
         setupTable();
         
@@ -110,6 +113,34 @@ public class InventoryController implements Initializable {
         Runtime.getRuntime().addShutdownHook(new Thread(() -> {
             SqliteConnection.closeConnection();
         }));
+    }
+    
+    /**
+     * Configures the ImageView for automatic centering and proper sizing
+     */
+    private void setupImageView() {
+        // Enable image preservation and centering
+        productImageView.setPreserveRatio(true);
+        productImageView.setSmooth(true);
+        
+        // Set preferred dimensions for the image preview
+        productImageView.setFitWidth(200);  // Adjust based on your UI layout
+        productImageView.setFitHeight(200); // Adjust based on your UI layout
+        
+        // Set default image with auto-fit
+        setImageWithAutoFit(new Image(getClass().getResourceAsStream("/view/images/addimage.png")));
+    }
+    
+    /**
+     * Sets an image in the ImageView with automatic centering and fitting
+     */
+    private void setImageWithAutoFit(Image image) {
+        if (image != null) {
+            productImageView.setImage(image);
+            
+            // The ImageView will automatically center and fit the image
+            // due to the preserveRatio=true and fitWidth/fitHeight settings
+        }
     }
     
     // Navigation methods
@@ -355,7 +386,7 @@ public class InventoryController implements Initializable {
             
             try {
                 Image image = new Image(selectedFile.toURI().toString());
-                productImageView.setImage(image);
+                setImageWithAutoFit(image);
             } catch (Exception e) {
                 showAlert("Error", "Could not load image: " + e.getMessage(), Alert.AlertType.ERROR);
             }
@@ -366,7 +397,7 @@ public class InventoryController implements Initializable {
     @FXML
     private void handleRemoveImage(ActionEvent event) {
         selectedImagePath = "";
-        productImageView.setImage(new Image(getClass().getResourceAsStream("/view/images/addimage.png")));
+        setImageWithAutoFit(new Image(getClass().getResourceAsStream("/view/images/addimage.png")));
     }
     
     // Setup methods
@@ -747,6 +778,13 @@ public class InventoryController implements Initializable {
             
             int count = 0;
             while (result.next()) {
+                // Convert Unix timestamp to LocalDateTime
+                long unixTimestamp = result.getLong("date_added");
+                LocalDateTime dateAdded = java.time.LocalDateTime.ofInstant(
+                    java.time.Instant.ofEpochSecond(unixTimestamp), 
+                    java.time.ZoneId.systemDefault()
+                );
+                
                 Product product = new Product(
                     result.getInt("id"),
                     result.getString("name"),
@@ -755,7 +793,7 @@ public class InventoryController implements Initializable {
                     result.getInt("stock"),
                     result.getString("status"),
                     result.getString("image_path"),
-                    result.getLong("date_added") 
+                    dateAdded
                 );
                 productsList.add(product);
                 count++;
