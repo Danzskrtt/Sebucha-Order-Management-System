@@ -17,18 +17,6 @@ public class Order {
     // Default constructor
     public Order() {}
 
-    // Constructor for database operations 
-    public Order(String id, String customerName, String orderType, String paymentMethod, 
-                 double totalAmount, LocalDateTime orderDate, String status) {
-        this.id = id;
-        this.customerName = customerName;
-        this.orderType = orderType;
-        this.paymentMethod = paymentMethod;
-        this.totalAmount = totalAmount;
-        this.orderDate = orderDate;
-        this.status = status;
-    }
-
     // Full constructor with all parameters
     public Order(String id, String customerName, String orderType, String paymentMethod, 
                  String status, double totalAmount, LocalDateTime orderDate, 
