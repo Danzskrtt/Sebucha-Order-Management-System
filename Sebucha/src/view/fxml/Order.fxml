@@ -66,11 +66,6 @@
                                     <FontIcon iconLiteral="bi-clock-history" iconSize="20" />
                                  </graphic>
                               </Button>
-                              <Label layoutX="32.0" layoutY="175.0" style="-fx-font-weight: bold; -fx-text-fill: #2C2C2C;" text="Welcome, Admin">
-                                 <font>
-                                    <Font name="Calibri Bold" size="19.0" />
-                                 </font>
-                              </Label>
                               <ImageView fitHeight="140.0" fitWidth="140.0" layoutX="30.0" layoutY="14.0" pickOnBounds="true" preserveRatio="true">
                                  <image>
                                     <Image url="@../images/sebucha1.png" />
@@ -106,7 +101,7 @@
                                     <Font name="Calibri Bold" size="15.0" />
                                  </font>
                                  <graphic>
-                                    <FontIcon iconColor="WHITE" iconLiteral="bi-x-circle" iconSize="16" />
+                                    <FontIcon iconColor="WHITE" iconLiteral="bi-eraser" iconSize="16" />
                                  </graphic>
                               </Button>
                               <FontIcon iconLiteral="bi-search" iconSize="20" layoutX="319.0" layoutY="44.0" text="" />
