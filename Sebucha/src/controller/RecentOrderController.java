@@ -1,6 +1,7 @@
 package controller;
 
 import javafx.application.Platform;
+
 import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
@@ -495,9 +496,11 @@ public class RecentOrderController implements Initializable {
                         customerName != null ? customerName : "N/A",
                         orderType != null ? orderType : "N/A",
                         paymentMethod != null ? paymentMethod : "N/A",
+                        orderStatus != null ? orderStatus : "Pending",
                         totalAmount,
                         orderDate,
-                        orderStatus != null ? orderStatus : "Pending"
+                        null, // orderItems - will be loaded separately if needed
+                        null  // notes - not stored in this query
                     );
                     
                     allOrders.add(order);
