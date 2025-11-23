@@ -1,6 +1,7 @@
 package controller;
 
 import javafx.application.Platform;
+
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
@@ -150,8 +151,7 @@ public class DashboardController implements Initializable {
             "• All order records\n" +
             "• All order items\n" +
             "• Dashboard revenue and statistics\n" +
-            "• Recent order history\n\n" +
-            "Do you wish to continue?"
+            "• Recent order history\n\n"
         );
 
         ButtonType continueButton = new ButtonType("Continue");
