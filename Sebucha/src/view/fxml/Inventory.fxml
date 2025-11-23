@@ -65,11 +65,6 @@
                                     <FontIcon iconLiteral="bi-clock-history" iconSize="20" />
                                  </graphic>
                               </Button>
-                              <Label layoutX="32.0" layoutY="175.0" style="-fx-font-weight: bold; -fx-text-fill: #2C2C2C;" text="Welcome, Admin">
-                                 <font>
-                                    <Font name="Calibri Bold" size="19.0" />
-                                 </font>
-                              </Label>
                               <ImageView fitHeight="140.0" fitWidth="140.0" layoutX="30.0" layoutY="14.0" pickOnBounds="true" preserveRatio="true">
                                  <image>
                                     <Image url="@../images/sebucha1.png" />
@@ -200,7 +195,7 @@
                         <AnchorPane layoutX="660.0" layoutY="14.0" prefHeight="280.0" prefWidth="625.0" style="-fx-background-color: #F5EDE0; -fx-background-radius: 20; -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.2), 20, 0, 0, 5);">
                            <children>
                               
-                              <ImageView fx:id="productImageView" fitHeight="180.0" fitWidth="200.0" layoutX="89.0" layoutY="70.0" pickOnBounds="true" preserveRatio="true" style="-fx-background-color: white; -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.1), 8, 0, 0, 2);">
+                              <ImageView fx:id="productImageView" fitHeight="180.0" fitWidth="200.0" layoutX="89.0" layoutY="50.0" pickOnBounds="true" preserveRatio="true" style="-fx-background-color: white; -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.1), 8, 0, 0, 2);">
                                  <image>
                                     <Image url="@../images/addimage.png" />
                                  </image>
@@ -231,7 +226,7 @@
                                     <FontIcon iconColor="WHITE" iconLiteral="bi-arrow-clockwise" iconSize="14" />
                                  </graphic>
                               </Button>
-                              <Label layoutX="83.0" layoutY="36.0" text="Product Image Preview">
+                              <Label layoutX="89.0" layoutY="24.0" text="Product Image Preview">
                                  <font>
                                     <Font name="Calibri Bold" size="20.0" />
                                  </font>
