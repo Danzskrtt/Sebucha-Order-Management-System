@@ -64,7 +64,7 @@
                                     <FontIcon iconLiteral="bi-clock-history" iconSize="20" />
                                  </graphic>
                               </Button>
-                              <Label layoutX="32.0" layoutY="175.0" style="-fx-font-weight: bold; -fx-text-fill: #2C2C2C;" text="Welcome, Admin">
+                              <Label layoutX="32.0" layoutY="175.0" style="-fx-font-weight: bold; -fx-text-fill: #2C2C2C;">
                                  <font>
                                     <Font name="Calibri Bold" size="19.0" />
                                  </font>
