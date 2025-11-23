@@ -1,7 +1,6 @@
 package controller;
 
 import javafx.application.Platform;
-
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
@@ -22,7 +21,7 @@ import java.util.ResourceBundle;
 
 /*
  * Handles the Login page: validates input, checks credentials via LoginModel,
- * and navigates to the Dashboard on success.
+ * and navigates based on user role (admin to Dashboard, staff to Order page).
  */
 public class LoginPageController implements Initializable {
     public LoginModel loginmodel = new LoginModel();
@@ -36,24 +35,21 @@ public class LoginPageController implements Initializable {
     @FXML
     private TextField PasswordField;
     
- 
     @Override
-    
     public void initialize(URL location, ResourceBundle resources) {
-    	
-    	if(loginmodel.isDbConnected()) {
-    		isConnected.setText("Database is Connected");
-    	}else {
-    		isConnected.setText("Database is not Connected");
-    	}
-    	
-    	// Center the login window after UI loads
+        if(loginmodel.isDbConnected()) {
+            isConnected.setText("Database is Connected");
+        }else {
+            isConnected.setText("Database is not Connected");
+        }
+        
+        // Center the login window after UI loads
         Platform.runLater(() -> {
             // Get the stage from any FXML component
             Stage stage = (Stage) UsernameField.getScene().getWindow();
             if (stage != null) {
                 stage.centerOnScreen();
-                stage.setResizable(false); // Keep login window non-resizable for consistency
+                stage.setResizable(false); // Keep login window non-resizable
             }
         });
     }
@@ -63,7 +59,6 @@ public class LoginPageController implements Initializable {
      * - Highlights invalid fields and shows a compact error message label.
      */
     private boolean validateInput(String username, String password) {
-       
         UsernameField.setStyle("");
         PasswordField.setStyle("");
         
@@ -101,12 +96,12 @@ public class LoginPageController implements Initializable {
         return isValid;
     }
    
-    
-     //Attempts login using the provided credentials.
-     //Validates inputs
-     //Calls LoginModel.isLogin
-     //Navigates to Dashboard on success, otherwise shows an error and highlights fields.
-     
+    /*
+     * Attempts login using the provided credentials.
+     * Validates inputs, calls LoginModel.isLogin, and navigates based on user role:
+     * - Admin users: Navigate to Dashboard with full access
+     * - Staff users: Navigate to Order page with limited access
+     */
     public void Login (ActionEvent event) {
         String username = UsernameField.getText();
         String password = PasswordField.getText();
@@ -119,22 +114,43 @@ public class LoginPageController implements Initializable {
         UsernameField.setStyle("");
         PasswordField.setStyle("");
         
-    	try {
+        try {
             if(loginmodel.isLogin(username.trim(), password)) {
-                // Navigate to Dashboard
+                // Navigate based on user role
                 try {
-                    FXMLLoader loader = new FXMLLoader(getClass().getResource("/view/fxml/Dashboard.fxml"));
+                    String fxmlPath;
+                    String windowTitle;
+                    
+                    if (loginmodel.isAdmin()) {
+                        // Admin gets full access to Dashboard
+                        fxmlPath = "/view/fxml/Dashboard.fxml";
+                        windowTitle = "Sebucha Order Management System";
+                    } else if (loginmodel.isStaff()) {
+                        // Staff gets limited access to Order page only
+                        fxmlPath = "/view/fxml/Order.fxml";
+                        windowTitle = "Sebucha Order Management System";
+                    } else {
+                        // Default for any other roles
+                        fxmlPath = "/view/fxml/Order.fxml";
+                        windowTitle = "Sebucha Order Management System";
+                    }
+                    
+                    FXMLLoader loader = new FXMLLoader(getClass().getResource(fxmlPath));
                     Parent root = loader.load();
                     
                     Stage stage = (Stage) ((Node) event.getSource()).getScene().getWindow();
                     Scene scene = new Scene(root); 
                     stage.setScene(scene);
-                    stage.setTitle("Sebucha Order Management System");
-                    stage.setResizable(true); 
+                    stage.setTitle(windowTitle);
+                    stage.setResizable(false); 
                     stage.show();
                     
+                    // Display success message with role info
+                    System.out.println("Login successful - User: " + loginmodel.getCurrentUsername() + 
+                                     ", Role: " + loginmodel.getCurrentUserRole());
+                    
                 } catch (IOException e) {
-                    isConnected.setText("Error loading dashboard. Please try again.");
+                    isConnected.setText("Error loading application. Please try again.");
                     isConnected.setTextFill(Color.RED);
                     e.printStackTrace();
                 }
@@ -142,7 +158,6 @@ public class LoginPageController implements Initializable {
             } else {
                 isConnected.setText("Username and Password is not correct");
                 isConnected.setTextFill(Color.RED);
-                
                 
                 UsernameField.setStyle("-fx-border-color: red; -fx-border-width: 1px;");
                 PasswordField.setStyle("-fx-border-color: red; -fx-border-width: 1px;");
@@ -153,5 +168,4 @@ public class LoginPageController implements Initializable {
             e.printStackTrace();
         }
     }
-    
 }
