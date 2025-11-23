@@ -39,8 +39,34 @@ public class ProductUpdatePopupController implements Initializable {
     @Override
     public void initialize(URL url, ResourceBundle resourceBundle) {
         setupComboBoxes();
+        setupImageView();
         // Set default image
-        productImageView.setImage(new Image(getClass().getResourceAsStream("/view/images/addimage.png")));
+        setImageWithAutoFit(new Image(getClass().getResourceAsStream("/view/images/addimage.png")));
+    }
+    
+    /**
+     * Configures the ImageView for automatic centering and proper sizing
+     */
+    private void setupImageView() {
+        // Enable image preservation and centering
+        productImageView.setPreserveRatio(true);
+        productImageView.setSmooth(true);
+        
+        // Set preferred dimensions for the image preview
+        productImageView.setFitWidth(200);  // Adjust based on your UI layout
+        productImageView.setFitHeight(200); // Adjust based on your UI layout
+    }
+    
+    /**
+     * Sets an image in the ImageView with automatic centering and fitting
+     */
+    private void setImageWithAutoFit(Image image) {
+        if (image != null) {
+            productImageView.setImage(image);
+            
+            // The ImageView will automatically center and fit the image
+            // due to the preserveRatio=true and fitWidth/fitHeight settings
+        }
     }
 
     public void setProduct(Product product) {
@@ -78,18 +104,18 @@ public class ProductUpdatePopupController implements Initializable {
             stockField.setText(String.valueOf(productToUpdate.getStock()));
             statusComboBox.setValue(productToUpdate.getStatus());
             
-            // Load existing image
+            // Load existing image with auto-fit
             if (productToUpdate.getImagePath() != null && !productToUpdate.getImagePath().isEmpty()) {
                 selectedImagePath = productToUpdate.getImagePath();
                 try {
                     File imageFile = new File(selectedImagePath);
                     if (imageFile.exists()) {
-                        productImageView.setImage(new Image(imageFile.toURI().toString()));
+                        setImageWithAutoFit(new Image(imageFile.toURI().toString()));
                     } else {
-                        productImageView.setImage(new Image(getClass().getResourceAsStream("/view/images/addimage.png")));
+                        setImageWithAutoFit(new Image(getClass().getResourceAsStream("/view/images/addimage.png")));
                     }
                 } catch (Exception e) {
-                    productImageView.setImage(new Image(getClass().getResourceAsStream("/view/images/addimage.png")));
+                    setImageWithAutoFit(new Image(getClass().getResourceAsStream("/view/images/addimage.png")));
                 }
             }
         }
@@ -110,7 +136,7 @@ public class ProductUpdatePopupController implements Initializable {
             selectedImagePath = selectedFile.getAbsolutePath();
             try {
                 Image image = new Image(selectedFile.toURI().toString());
-                productImageView.setImage(image);
+                setImageWithAutoFit(image);
             } catch (Exception e) {
                 showAlert("Error", "Could not load image: " + e.getMessage(), Alert.AlertType.ERROR);
             }
@@ -120,7 +146,7 @@ public class ProductUpdatePopupController implements Initializable {
     @FXML
     private void handleRemoveImage() {
         selectedImagePath = "";
-        productImageView.setImage(new Image(getClass().getResourceAsStream("/view/images/addimage.png")));
+        setImageWithAutoFit(new Image(getClass().getResourceAsStream("/view/images/addimage.png")));
     }
 
     @FXML
