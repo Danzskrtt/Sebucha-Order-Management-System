@@ -15,17 +15,6 @@ public class OrderItem {
     // Default constructor
     public OrderItem() {}
 
-    // Constructor matching the controller expectations
-    public OrderItem(int orderId, int productId, String productName, int quantity, 
-                     double unitPrice, double totalPrice) {
-        this.orderId = orderId;
-        this.productId = productId;
-        this.productName = productName;
-        this.quantity = quantity;
-        this.unitPrice = unitPrice;
-        this.totalPrice = totalPrice;
-    }
-
     // Enhanced constructor with customization
     public OrderItem(int orderId, int productId, String productName, int quantity, 
                      double unitPrice, double totalPrice, String size, String addOn, 
