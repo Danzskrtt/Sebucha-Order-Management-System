@@ -1,5 +1,6 @@
 package controller;
 
+import javafx.application.Platform;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
@@ -87,6 +88,52 @@ public class OrderController implements Initializable {
         loadAvailableProducts();
         setupEventHandlers();
         clearOrderForm();
+        
+        // Apply role-based UI restrictions
+        applyRoleBasedRestrictions();
+        
+        // Center the window after UI loads (especially important for staff users)
+        Platform.runLater(() -> {
+            try {
+                // Get the stage from any FXML component
+                Stage stage = (Stage) customerNameField.getScene().getWindow();
+                if (stage != null) {
+                    stage.centerOnScreen();
+                    
+                    // For staff users, ensure the window is properly sized and centered
+                    UserSession session = UserSession.getInstance();
+                    if (session.isStaff()) {
+                        // Set a consistent window title for staff
+                        stage.setTitle("Sebucha Order Management System");
+                        // Ensure window is not resizable for consistency
+                        stage.setResizable(false);
+                    }
+                }
+            } catch (Exception e) {
+                // Handle case where scene might not be fully loaded yet
+                System.out.println("Could not center window: " + e.getMessage());
+            }
+        });
+    }
+    
+    /**
+     * Applies UI restrictions based on user role
+     * Staff users can only access Order functionality
+     * Admin users have full access to all features
+     */
+    private void applyRoleBasedRestrictions() {
+        UserSession session = UserSession.getInstance();
+        if (session.isStaff()) {
+            // Hide/disable navigation buttons for staff users
+            dashboardbutton.setVisible(false);
+            inventorybutton.setVisible(false);
+            recentorderbutton.setVisible(false);
+            
+            // Optionally, you can disable instead of hide
+            // dashboardbutton.setDisable(true);
+            // inventorybutton.setDisable(true);
+            // recentorderbutton.setDisable(true);
+        }
     }
     
      
@@ -326,7 +373,7 @@ public class OrderController implements Initializable {
         
         try {
             connection = SqliteConnection.Connector();
-            String query = "SELECT * FROM products WHERE status = 'Available' AND stock > 0";
+            String query = "SELECT * FROM products WHERE status IN ('Available', 'Low Stock') AND stock > 0";
             
             PreparedStatement statement = connection.prepareStatement(query);
             ResultSet resultSet = statement.executeQuery();
@@ -452,35 +499,9 @@ public class OrderController implements Initializable {
         }
     }
 
-    // Adds a product to the cart
-    public void addProductToCart(Product product, int quantity) {
-        // Check if product already exists in cart
-        for (OrderItem item : shoppingCart) {
-            if (item.getProductId() == product.getId()) {
-                // Update quantity
-                item.setQuantity(item.getQuantity() + quantity);
-                item.setTotalPrice(item.getQuantity() * item.getUnitPrice());
-                shoppingCartTable.refresh();
-                return;
-            }
-        }
-        
-        // Add new item to cart
-        OrderItem newItem = new OrderItem(
-            0, // orderId will be set when order is placed
-            product.getId(),
-            product.getName(),
-            quantity,
-            product.getPrice(),
-            quantity * product.getPrice()
-        );
-        
-        shoppingCart.add(newItem);
-    }
-
     
      //Adds a product with customization add-on, optionally combining with
-     //existing cart items (e.g., add-ons or cups) and keeping totals in sync.
+     //existing cart items (e.g., add-ons) and keeping totals in sync.
      
     public void addEnhancedProductToCart(Product product, int quantity, 
                                        String selectedAddOn, String customProductName, double totalPrice) {
@@ -501,8 +522,6 @@ public class OrderController implements Initializable {
                 
                 if (product.getCategory().equals("Add-ons")) {
                     combinedName += " + " + product.getName();
-                } else if (product.getCategory().equals("Cups")) {
-                    combinedName = product.getName() + " with " + compatibleItem.getProductName();
                 }
                 
                 // Update the compatible item
@@ -739,6 +758,9 @@ public class OrderController implements Initializable {
         Optional<ButtonType> result = alert.showAndWait();
         if (result.isPresent() && result.get() == ButtonType.OK) {
             try {
+                // Clear user session on logout
+                UserSession.getInstance().clearSession();
+                
                 loadScene(event, "/view/fxml/LoginPage.fxml");
             } catch (IOException e) {
                 showAlert(Alert.AlertType.ERROR, "Error", "Could not load Login page: " + e.getMessage());
